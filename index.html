@@ -3294,6 +3294,7 @@
       var toastEl = document.getElementById('toast');
       var toastTimer;
       var checkoutReturnScreen = 'academy';
+      var WATCH_SHOW_URL = 'http://localhost:5173/session/6681a58f-3fd6-4027-ad98-03bd6dfc13a7?streaming_mode=direct&mode=standard&idle_video_url=/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4&idle_video_urls=[%22/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4%22]&visual_input={%22enabled%22:true,%22frame_interval_ms%22:1000,%22max_width%22:1280,%22max_height%22:720,%22jpeg_quality%22:0.78,%22max_frame_bytes%22:524288,%22ws_max_message_bytes%22:1048576,%22max_recent_frames%22:2,%22frame_ttl_ms%22:10000}&character_id=6f901915-bea3-46eb-97d6-9983ec8209ac';
 
       var state = {
         route: 'academy',
@@ -3545,7 +3546,7 @@
 
       /* 界面一交互 */
       document.getElementById('btnWatchShow').addEventListener('click', function () {
-        openInfo('立即观看演出', '原型示意：此处可跳转播放器或预约场次。');
+        window.location.href = WATCH_SHOW_URL;
       });
       document.getElementById('btnListenHist').addEventListener('click', function () {
         openInfo('倾听历史音韵', '原型示意：打开 1982 年珍贵音频档案试听。');
