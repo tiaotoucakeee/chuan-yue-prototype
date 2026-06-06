@@ -1,0 +1,3800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>穿·越 — 交互原型（四屏）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Noto+Sans+SC:ital,wght@0,400;0,500;1,400&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ========== 设计令牌（对齐 Figma 浅色 / 深色两套） ========== */
+    :root {
+      --cream: #fbfaee;
+      --cream-2: #f5f4e8;
+      --cream-3: #e9e9dd;
+      --sage: #dfe5d2;
+      --primary: #4a654f;
+      --primary-soft: rgba(74, 101, 79, 0.12);
+      --accent: #8daa91;
+      --text: #1b1c15;
+      --text-2: #424842;
+      --text-muted: #606757;
+      --line: rgba(194, 200, 192, 0.2);
+      --radius-card: 24px;
+      --radius-btn: 12px;
+      --radius-sm: 8px;
+      --header-h: 64px;
+      --nav-h: 72px;
+      --app-w: 390px;
+      --shadow-phone: 0 24px 80px rgba(27, 28, 21, 0.18), 0 4px 2px rgba(0, 0, 0, 0.25);
+      --shadow-nav: 0 -4px 32px -4px rgba(27, 28, 21, 0.05);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+
+      /* 宝藏页深色 */
+      --dark-bg: #1a1614;
+      --dark-text: #fdf3df;
+      --dark-muted: #58413f;
+      --dark-gold: rgba(115, 92, 0, 0.4);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #e8e6df;
+      color: var(--text);
+      font-family: "Noto Sans SC", system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge legacy */
+    }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Edge */
+    }
+
+    /* 桌面：手机预览外壳 */
+    .viewport {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px calc(32px + var(--safe-b));
+    }
+
+    .phone {
+      width: 100%;
+      max-width: var(--app-w);
+      background: var(--cream);
+      border-radius: 28px;
+      box-shadow: var(--shadow-phone);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: min(844px, calc(100vh - 48px));
+      min-height: min(844px, calc(100vh - 64px));
+      max-height: calc(100vh - 48px);
+    }
+
+    /* 主内容区滚动，底栏固定在手机框底部 */
+    .phone__scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .phone__scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .phone--dark {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+    }
+
+    /* 单屏切换 */
+    .screen {
+      display: none;
+      padding-bottom: 24px;
+      min-height: 100%;
+      animation: enter 0.35s ease-out both;
+    }
+    .screen.is-active { display: block; }
+    .screen.publish-screen.is-active,
+    .screen.checkout-screen.is-active {
+      display: flex;
+    }
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 顶栏 */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      height: var(--header-h);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(251, 250, 238, 0.82);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    .phone--dark .topbar {
+      background: rgba(26, 22, 20, 0.92);
+      border-bottom-color: rgba(223, 191, 188, 0.12);
+    }
+
+    .topbar__brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+    .topbar__logo-box {
+      border: 1px solid rgba(253, 243, 223, 0.35);
+      padding: 4px 10px;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: var(--dark-text);
+      display: none;
+    }
+    .phone--dark .topbar__logo-box { display: block; }
+    .phone--dark .topbar__title-inline { display: none; }
+
+    .icon-btn {
+      border: none;
+      background: transparent;
+      padding: 8px;
+      margin: -8px;
+      cursor: pointer;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:active { transform: scale(0.94); background: rgba(0, 0, 0, 0.05); }
+    .icon-btn img { width: 18px; height: 18px; display: block; object-fit: contain; }
+
+    .topbar__title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .topbar__right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* AI 实验室内顶栏辅助：子 Tab */
+    .lab-subtabs {
+      display: none;
+      position: sticky;
+      top: var(--header-h);
+      z-index: 35;
+      padding: 8px 24px 10px;
+      gap: 8px;
+      background: rgba(251, 250, 238, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    .lab-subtabs.is-visible { display: flex; }
+    .lab-subtabs button {
+      flex: 1;
+      border: 1px solid var(--line);
+      background: var(--cream-2);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .lab-subtabs button.is-active {
+      background: var(--sage);
+      color: var(--primary);
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    /* 底栏（贴在手机壳底部，不随长页内容下移） */
+    .bottom-nav {
+      flex-shrink: 0;
+      position: relative;
+      z-index: 50;
+      height: calc(var(--nav-h) + var(--safe-b));
+      padding: 8px 16px calc(12px + var(--safe-b));
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      gap: 8px;
+      background: rgba(251, 250, 238, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-nav);
+    }
+    .phone--dark .bottom-nav {
+      background: rgba(21, 18, 16, 0.95);
+      border-top: 1px solid rgba(223, 191, 188, 0.08);
+    }
+
+    .nav-item {
+      flex: 0 0 auto;
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 16px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 10px;
+      letter-spacing: -0.25px;
+      font-style: italic;
+      font-family: "Noto Sans SC", sans-serif;
+      opacity: 0.65;
+    }
+    .nav-item img { width: 20px; height: 20px; object-fit: contain; }
+    .nav-item.is-active {
+      opacity: 1;
+      background: var(--sage);
+      color: var(--primary);
+    }
+    .phone--dark .nav-item {
+      color: #c8c6c5;
+      opacity: 0.7;
+    }
+    .phone--dark .nav-item.is-active {
+      background: rgba(74, 101, 79, 0.35);
+      color: #dfe5d2;
+    }
+
+    /* 通用排版 */
+    .serif { font-family: "Noto Serif SC", serif; }
+    .muted { color: var(--text-muted); }
+    .section-pad { padding-left: 22px; padding-right: 24px; }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius-btn);
+      padding: 16px 32px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 10px 15px -3px rgba(74, 101, 79, 0.2), 0 4px 6px -4px rgba(74, 101, 79, 0.2);
+      font-family: inherit;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius-btn);
+      padding: 16px 32px;
+      background: var(--cream-3);
+      color: var(--text);
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-secondary:active { transform: scale(0.98); }
+
+    /* ----- 界面一：大师主页 ----- */
+    .hero {
+      position: relative;
+      padding: 24px 24px 48px;
+      min-height: 560px;
+      overflow: hidden;
+    }
+    /* Hero：底层纹理 + 顶层人像，对齐 Figma mask 叠层 */
+    .hero__bg {
+      position: absolute;
+      inset: 0;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .hero__texture {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 20%;
+    }
+    .hero__model {
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      transform: translateX(-50%);
+      width: 118%;
+      max-width: none;
+      height: 92%;
+      object-fit: cover;
+      object-position: 50% 8%;
+    }
+    .hero__grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--cream) 0%, rgba(251, 250, 238, 0) 55%);
+      pointer-events: none;
+    }
+    .hero__content {
+      position: relative;
+      z-index: 2;
+      margin-top: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 100%;
+    }
+    .hero__title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 900;
+      font-size: clamp(44px, 12vw, 60px);
+      line-height: 1.15;
+      margin: 0;
+      color: var(--text);
+    }
+    .hero__subtitle {
+      font-family: "Noto Serif SC", serif;
+      font-size: clamp(26px, 7vw, 36px);
+      color: #383838;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .hero__desc {
+      font-size: 18px;
+      line-height: 1.65;
+      color: var(--text-2);
+      margin: 0;
+      font-style: italic;
+    }
+    .hero__actions { display: flex; flex-direction: column; gap: 16px; padding-top: 6px; }
+
+    .bento-title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 30px;
+      line-height: 36px;
+      margin: 0 0 24px;
+      padding-left: 2px;
+    }
+    .card {
+      border-radius: var(--radius-card);
+      padding: 32px;
+      margin-bottom: 24px;
+      max-width: 100%;
+    }
+    .card--cream { background: var(--cream-2); }
+    .card--sage { background: var(--sage); }
+    .card--darkgreen {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 20px 25px -5px rgba(74, 101, 79, 0.1), 0 8px 10px -6px rgba(74, 101, 79, 0.1);
+      position: relative;
+    }
+    .card--muted { background: var(--cream-3); }
+
+    .stage-card {
+      position: relative;
+      border-radius: var(--radius-card);
+      min-height: 300px;
+      overflow: hidden;
+      padding: 32px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #4a3d35, #2c241f);
+    }
+    .stage-card__bg {
+      position: absolute;
+      inset: 0;
+    }
+    .stage-card__bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+    .stage-card__grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(74, 101, 79, 0.85), transparent);
+    }
+    .stage-card__body { position: relative; z-index: 2; color: #fff; }
+    .stage-card__play {
+      position: relative;
+      z-index: 2;
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .stage-card__play:active { transform: scale(0.95); }
+
+    .narrative { padding: 48px 24px 64px; }
+    .narrative h2 {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 900;
+      font-size: 48px;
+      line-height: 1;
+      margin: 0 0 24px;
+    }
+    .narrative .accent { color: var(--accent); }
+    .quote-wrap {
+      position: relative;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      background: #efeee3;
+      min-height: 320px;
+      margin-top: 24px;
+    }
+    .quote-wrap__tex {
+      position: absolute;
+      inset: 0;
+      opacity: 0.35;
+      mix-blend-mode: multiply;
+    }
+    .quote-wrap__tex img { width: 125%; height: 100%; object-fit: cover; transform: translateX(-8%); }
+    .quote-text {
+      position: relative;
+      z-index: 2;
+      padding: 48px 24px;
+      text-align: center;
+      font-family: "Noto Serif SC", serif;
+      font-size: 22px;
+      line-height: 1.75;
+      color: rgba(27, 28, 21, 0.82);
+    }
+    .float-tag {
+      position: absolute;
+      right: 16px;
+      bottom: -28px;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 20px;
+      border-radius: var(--radius-btn);
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1.35;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      z-index: 3;
+    }
+
+    /* ----- 界面二：虚拟试衣 ----- */
+    .lab-hero { padding: 88px 24px 12px; }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .lab-hero h2 {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 900;
+      font-size: 44px;
+      line-height: 1.25;
+      margin: 0 0 12px;
+    }
+    .upload-card {
+      margin: 24px 24px 0;
+      border: 2px dashed #c2c8c0;
+      border-radius: 12px;
+      padding: 34px 24px;
+      text-align: center;
+      background: var(--cream-2);
+      position: relative;
+    }
+    .upload-card__circle {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    .guide-card {
+      margin: 24px 24px 0;
+      background: #efeee3;
+      border-radius: 12px;
+      padding: 28px 24px 24px;
+    }
+    .guide-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      align-items: flex-start;
+    }
+    .guide-row:last-child { margin-bottom: 0; }
+    .guide-ico {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: var(--sage);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+
+    .gallery-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 32px 24px 16px;
+    }
+    .gallery-head h3 {
+      margin: 0;
+      font-family: "Noto Serif SC", serif;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+    .gallery-arrows {
+      display: flex;
+      gap: 8px;
+    }
+    .arrow-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid #c2c8c0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .arrow-btn:active { background: var(--cream-3); }
+
+    .h-scroll {
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      padding: 8px 24px 32px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      cursor: grab;
+      overscroll-behavior-x: contain;
+    }
+    .h-scroll.is-dragging { cursor: grabbing; }
+    .h-scroll::-webkit-scrollbar { display: none; }
+    .role-card {
+      flex: 0 0 280px;
+      scroll-snap-align: start;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: #efeee3;
+      min-height: 360px;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+    .role-card.is-selected { border-color: var(--primary); }
+    .role-card__media {
+      height: 100%;
+      min-height: 360px;
+      background: linear-gradient(160deg, #d4cbb8, #9a8f7a);
+      position: relative;
+    }
+    .role-card__media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .role-card__grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(27, 28, 21, 0.65), transparent);
+    }
+    .role-card__label {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      color: #fff;
+      z-index: 2;
+    }
+    .role-card__badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-style: italic;
+    }
+
+    /* ----- 界面三：宝藏（深色） ----- */
+    .treasure-hero-img {
+      position: relative;
+      height: 420px;
+      margin: 16px 16px 0;
+      border: 1px solid rgba(223, 191, 188, 0.2);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      background: linear-gradient(145deg, #3d2a28, #1a1614);
+    }
+    .treasure-hero-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.9;
+    }
+    .ref-badge {
+      position: absolute;
+      bottom: 8px;
+      left: 24px;
+      backdrop-filter: blur(6px);
+      background: rgba(255, 248, 240, 0.9);
+      border: 1px solid rgba(223, 191, 188, 0.2);
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #1f1b10;
+      font-family: "Noto Serif SC", serif;
+    }
+
+    .treasure-copy {
+      padding: 40px 24px 48px;
+    }
+    .treasure-copy .rule {
+      border-right: 4px solid var(--primary);
+      padding-right: 24px;
+      margin-bottom: 24px;
+    }
+    .treasure-copy .featured {
+      letter-spacing: 5.6px;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: var(--sage);
+      margin: 0 0 8px;
+      font-family: "Noto Serif SC", serif;
+    }
+    .treasure-copy .big-title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 900;
+      font-size: 44px;
+      line-height: 1.15;
+      margin: 0;
+    }
+    .treasure-copy .big-title .cn { color: var(--text-muted); }
+    .treasure-copy .big-title .en { color: var(--dark-gold); }
+    .treasure-copy p.desc {
+      font-family: "Noto Serif SC", serif;
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--dark-muted);
+      margin: 24px 0 0;
+    }
+    .btn-gold {
+      margin-top: 28px;
+      float: right;
+      border: none;
+      padding: 16px 36px;
+      border-radius: 0;
+      background: linear-gradient(135deg, rgb(74, 101, 79), rgba(115, 92, 0, 0.85));
+      color: #fff;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      cursor: pointer;
+    }
+    .btn-gold:active { transform: scale(0.98); }
+
+    .treasure-section-head {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(223, 191, 188, 0.12);
+      margin-bottom: 24px;
+    }
+    .tabs-inline {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--dark-muted);
+      font-family: "Noto Serif SC", serif;
+    }
+    .tabs-inline button {
+      border: none;
+      background: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 0 0 4px;
+      border-bottom: 1px solid transparent;
+      font-family: inherit;
+      font-size: inherit;
+    }
+    .tabs-inline button.is-active {
+      border-bottom-color: var(--primary);
+      color: var(--dark-text);
+    }
+
+    .cream-panel {
+      margin: 0 16px 24px;
+      padding: 28px 24px 24px;
+      background: #fdf3df;
+      border: 1px solid rgba(223, 191, 188, 0.2);
+      position: relative;
+    }
+    .cream-panel h4 {
+      margin: 380px 0 12px;
+      font-family: "Noto Serif SC", serif;
+      font-size: 20px;
+      color: #1f1b10;
+    }
+    .cream-panel .thumb {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 48px;
+      height: 300px;
+      background: linear-gradient(120deg, #e8dcc8, #c4a882);
+      overflow: hidden;
+    }
+    .cream-panel .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .wide-shot {
+      margin: 0 0 24px;
+      height: 200px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #2a2420, #1a1614);
+    }
+    .wide-shot img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+
+    .archive-block {
+      margin: 24px 16px;
+      padding: 36px 28px;
+      background: var(--primary);
+      text-align: center;
+      color: #fff;
+    }
+    .archive-block .btn-outline {
+      margin-top: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: transparent;
+      color: #fff;
+      padding: 10px 28px;
+      font-family: "Noto Serif SC", serif;
+      cursor: pointer;
+    }
+
+    /* 宝藏页：遗产证书（Figma 1:14） */
+    .heritage-cert {
+      margin: 8px 16px 32px;
+      padding: 40px 28px 36px;
+      background: #fdf3df;
+      border: 1px solid rgba(223, 191, 188, 0.2);
+      position: relative;
+    }
+    .heritage-cert::before,
+    .heritage-cert::after {
+      content: "";
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: var(--primary);
+      border-style: solid;
+      pointer-events: none;
+    }
+    .heritage-cert::before { left: 12px; top: 12px; border-width: 2px 0 0 2px; }
+    .heritage-cert::after { right: 12px; bottom: 12px; border-width: 0 2px 2px 0; }
+    .heritage-cert__row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .heritage-cert__side-serif {
+      writing-mode: vertical-rl;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 0.35em;
+      color: var(--primary);
+      padding-top: 4px;
+    }
+    .heritage-cert__title {
+      margin: 0;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 900;
+      font-size: 32px;
+      line-height: 1.15;
+      text-align: right;
+      color: #1f1b10;
+    }
+    .heritage-cert__sub {
+      margin: 12px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: right;
+      color: #948868;
+      font-family: "Noto Serif SC", serif;
+    }
+    .heritage-cert__rule {
+      border: none;
+      border-top: 1px solid rgba(223, 191, 188, 0.35);
+      margin: 28px 0 24px;
+    }
+    .heritage-cert__fields { display: flex; flex-direction: column; gap: 22px; }
+    .heritage-cert__field {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      font-size: 13px;
+      color: var(--dark-muted);
+    }
+    .heritage-cert__field strong {
+      display: block;
+      margin-top: 6px;
+      border-bottom: 1px solid #1f1b10;
+      padding-bottom: 2px;
+      color: #1f1b10;
+      font-size: 15px;
+      font-family: "Noto Serif SC", serif;
+      text-align: right;
+    }
+    .heritage-cert__badges {
+      display: flex;
+      justify-content: flex-end;
+      gap: 28px;
+      margin-top: 28px;
+      padding-top: 8px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #1f1b10;
+      opacity: 0.85;
+    }
+    .treasure-outro {
+      padding: 0 24px 48px;
+    }
+    .treasure-outro h3 {
+      font-family: "Noto Serif SC", serif;
+      font-size: 32px;
+      line-height: 1.35;
+      color: #fdf3df;
+      margin: 0 0 16px;
+      font-weight: 700;
+    }
+    .treasure-outro p {
+      font-size: 17px;
+      line-height: 1.95;
+      color: var(--dark-muted);
+      margin: 0;
+    }
+    .treasure-micro {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .treasure-micro > div {
+      height: 88px;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .treasure-micro img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .treasure-micro span {
+      position: absolute;
+      left: 6px;
+      bottom: 6px;
+      font-size: 9px;
+      color: #fff;
+      background: var(--primary);
+      padding: 2px 6px;
+      font-family: "Noto Serif SC", serif;
+    }
+
+    /* ----- 界面四：声学实验室 ----- */
+    .audio-page .decor-pattern {
+      position: absolute;
+      right: 0;
+      top: 56px;
+      width: 220px;
+      height: 220px;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+    .audio-page .decor-pattern img { width: 100%; height: 100%; object-fit: contain; }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: #cceacf;
+      color: #334d38;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      font-family: "Manrope", sans-serif;
+      text-transform: uppercase;
+    }
+
+    .input-card {
+      margin: 0 24px;
+      padding: 24px;
+      background: var(--cream-2);
+      border: 1px solid rgba(194, 200, 192, 0.15);
+      border-radius: 12px;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    }
+    .textarea-faux {
+      border: 1px solid rgba(194, 200, 192, 0.45);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      min-height: 160px;
+      padding: 12px;
+      margin-top: 12px;
+      background: #fff;
+    }
+    .textarea-faux textarea {
+      width: 100%;
+      border: none;
+      resize: vertical;
+      min-height: 132px;
+      font-family: "Noto Serif SC", serif;
+      font-size: 16px;
+      line-height: 2;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+    }
+    .textarea-faux textarea::placeholder { color: #c2c8c0; }
+
+    .style-card {
+      display: flex;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      background: rgba(233, 233, 221, 0.35);
+      margin-bottom: 16px;
+      cursor: pointer;
+      align-items: stretch;
+    }
+    .style-card.is-selected {
+      background: #fff;
+      border-color: var(--primary);
+    }
+    .style-card__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .style-card__check {
+      color: var(--primary);
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0;
+    }
+    .style-card.is-selected .style-card__check {
+      opacity: 1;
+    }
+    .style-card__thumb {
+      width: 88px;
+      height: 112px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: linear-gradient(145deg, #cbbba5, #8a7b6a);
+    }
+    .style-card__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .btn-gradient {
+      margin: 8px 24px 0;
+      width: calc(100% - 48px);
+      border: none;
+      border-radius: 12px;
+      padding: 18px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      color: #fff;
+      font-size: 17px;
+      font-style: italic;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 10px 15px -3px rgba(74, 101, 79, 0.25);
+    }
+
+    .player-card {
+      margin: 24px;
+      padding: 24px;
+      background: #efeee3;
+      border-radius: 12px;
+      border: 1px solid rgba(194, 200, 192, 0.12);
+    }
+    .wave {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 4px;
+      height: 120px;
+      padding: 8px 4px;
+      margin: 16px 0;
+    }
+    .wave span {
+      flex: 1;
+      border-radius: 999px;
+      background: rgba(74, 101, 79, 0.25);
+      min-height: 16px;
+      align-self: flex-end;
+    }
+    .wave span:nth-child(5) { height: 96px; background: var(--primary); }
+    .wave span:nth-child(6) { height: 72px; background: rgba(74, 101, 79, 0.85); }
+
+    .progress {
+      height: 4px;
+      background: rgba(194, 200, 192, 0.35);
+      border-radius: 999px;
+      position: relative;
+      margin-top: 8px;
+    }
+    .progress__fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 38%;
+      background: var(--primary);
+      border-radius: 999px;
+    }
+    .progress__knob {
+      position: absolute;
+      left: 36%;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--primary);
+      border: 2px solid #fff;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .play-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      margin-top: 16px;
+    }
+    .play-big {
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 20px 25px -5px rgba(74, 101, 79, 0.35);
+    }
+
+    .tip-box {
+      margin: 16px 24px 32px;
+      padding: 20px;
+      border-radius: 12px;
+      background: rgba(223, 229, 210, 0.35);
+      border: 1px solid rgba(74, 101, 79, 0.12);
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* 抽屉 / 弹窗 */
+    .drawer-scrim,
+    .modal-scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 200;
+    }
+    .drawer-scrim.is-open,
+    .modal-scrim.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(280px, 86vw);
+      background: var(--cream);
+      z-index: 210;
+      transform: translateX(-100%);
+      transition: transform 0.28s ease;
+      padding: 24px;
+      box-shadow: 8px 0 40px rgba(0, 0, 0, 0.12);
+    }
+    .drawer.is-open { transform: translateX(0); }
+
+    .modal {
+      position: fixed;
+      left: 50%;
+      top: 45%;
+      transform: translate(-50%, -50%) scale(0.96);
+      width: min(340px, calc(100vw - 32px));
+      background: var(--cream-2);
+      border-radius: 16px;
+      padding: 24px;
+      z-index: 220;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+    }
+    .modal.is-open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 96px;
+      transform: translateX(-50%);
+      background: rgba(27, 28, 21, 0.88);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.is-visible { opacity: 1; }
+
+    /* ----- 艺苑研习（Figma Body 1:895，大师 Tab） ----- */
+    .academy-page {
+      padding: 8px 0 120px;
+    }
+    .academy-hero {
+      padding: 16px 24px 32px;
+    }
+    .academy-eyebrow {
+      font-family: Manrope, sans-serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0 0 16px;
+      line-height: 15px;
+    }
+    .academy-hero-title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 900;
+      font-size: 48px;
+      line-height: 60px;
+      margin: 0;
+      color: var(--text);
+    }
+    .academy-section {
+      margin-bottom: 48px;
+    }
+    .academy-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      margin-bottom: 24px;
+    }
+    .academy-section-head h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 400;
+      font-size: 20px;
+      line-height: 28px;
+      color: var(--text);
+    }
+    .academy-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .academy-section-head__meta {
+      font-family: Manrope, sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      line-height: 16px;
+    }
+    .academy-link-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      background: none;
+      padding: 0;
+      font: inherit;
+      font-family: Manrope, sans-serif;
+      font-size: 12px;
+      color: var(--primary);
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .academy-h-scroll {
+      display: flex;
+      gap: 24px;
+      padding: 0 24px 8px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .academy-h-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .academy-artist-card {
+      flex: 0 0 192px;
+      width: 192px;
+      scroll-snap-align: start;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      height: 256px;
+      background: #3d3d38;
+    }
+    .academy-artist-card__photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .academy-artist-card__grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+      pointer-events: none;
+    }
+    .academy-artist-card__meta {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 2;
+      color: #fff;
+    }
+    .academy-artist-card__meta .name {
+      font-family: "Noto Serif SC", serif;
+      font-size: 18px;
+      margin: 0;
+      line-height: 28px;
+      font-weight: 400;
+    }
+    .academy-artist-card__meta .role {
+      font-family: Manrope, sans-serif;
+      font-size: 10px;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.82);
+      margin: 0;
+      line-height: 15px;
+    }
+    .academy-stack {
+      padding: 8px 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .academy-course-featured {
+      background: var(--cream-2);
+      border: 1px solid rgba(194, 200, 192, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .academy-course-featured__media {
+      height: 256px;
+      position: relative;
+      overflow: hidden;
+    }
+    .academy-course-featured__media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 20%;
+    }
+    .academy-course-featured__body {
+      padding: 32px;
+    }
+    .academy-label-caps {
+      font-family: Manrope, sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin: 0 0 8px;
+      line-height: 15px;
+    }
+    .academy-course-featured__body h3 {
+      font-family: "Noto Serif SC", serif;
+      font-size: 24px;
+      line-height: 33px;
+      font-weight: 400;
+      margin: 0 0 16px;
+      color: var(--text);
+    }
+    .academy-course-meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 16px 0 0;
+      line-height: 20px;
+    }
+    .academy-course-small {
+      background: var(--cream-2);
+      border: 1px solid rgba(194, 200, 192, 0.1);
+      border-radius: 12px;
+      padding: 17px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .academy-course-small__thumb {
+      border-radius: 8px;
+      overflow: hidden;
+      height: 173px;
+      position: relative;
+      background: #c8c4b8;
+    }
+    .academy-course-small__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .academy-course-small h4 {
+      font-family: "Noto Serif SC", serif;
+      font-size: 18px;
+      font-weight: 400;
+      margin: 12px 0 0;
+      line-height: 28px;
+      color: var(--text);
+    }
+    .academy-course-small .sub {
+      font-family: Manrope, sans-serif;
+      font-size: 12px;
+      letter-spacing: -0.6px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 16px;
+    }
+    .academy-snippet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 0 24px;
+    }
+    .academy-snippet {
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 390 / 507;
+      max-height: 280px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
+    .academy-snippet__img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .academy-snippet__grad {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    .academy-snippet__grad img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .academy-snippet__heart {
+      position: absolute;
+      top: 14px;
+      right: 10px;
+      z-index: 2;
+      width: 22px;
+      height: 22px;
+      border: none;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+    }
+    .academy-snippet__heart span {
+      font-size: 11px;
+      line-height: 1;
+    }
+    .academy-snippet__cap {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 2;
+      color: #fff;
+    }
+    .academy-snippet__cap .user {
+      font-size: 10px;
+      opacity: 0.85;
+      font-style: italic;
+      margin: 0 0 4px;
+      line-height: 15px;
+    }
+    .academy-snippet__cap .title {
+      font-family: "Noto Serif SC", serif;
+      font-size: 12px;
+      line-height: 16px;
+      margin: 0;
+      font-weight: 400;
+    }
+    .academy-fab {
+      position: absolute;
+      z-index: 48;
+      right: 24px;
+      bottom: calc(var(--nav-h) + var(--safe-b) + 12px);
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      padding: 0;
+    }
+    .academy-fab.is-visible {
+      display: flex;
+    }
+    .academy-fab:active {
+      transform: scale(0.96);
+    }
+
+    /* ----- 梨园市集（Figma Body 1:1046） ----- */
+    .market-page {
+      background: var(--cream);
+      padding: 8px 0 120px;
+    }
+    .market-main {
+      padding: 0 24px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+    .market-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .market-search-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .market-search-input {
+      background: var(--cream-2);
+      border-radius: var(--radius-sm);
+      padding: 13px 16px 12px 48px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 16px;
+      font-style: italic;
+      color: rgba(115, 121, 114, 0.6);
+      line-height: normal;
+      cursor: pointer;
+      user-select: none;
+    }
+    .market-search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+    .market-search-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .market-theater-btn {
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--radius-btn);
+      padding: 12px 24px;
+      background: var(--sage);
+      color: var(--text-muted);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 16px;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .market-theater-btn:active {
+      transform: scale(0.99);
+      opacity: 0.94;
+    }
+    .market-theater-ico {
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0.85;
+    }
+    .market-section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+    }
+    .market-eyebrow {
+      font-family: Manrope, sans-serif;
+      font-size: 12px;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: rgba(96, 103, 87, 0.7);
+      margin: 0 0 4px;
+      line-height: 16px;
+    }
+    .market-h2 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 400;
+      line-height: 36px;
+      color: var(--text);
+    }
+    .market-link {
+      border: none;
+      background: none;
+      padding: 4px 0;
+      cursor: pointer;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      font-style: italic;
+      color: var(--primary);
+    }
+    .market-filter-btn {
+      border: 1px solid rgba(194, 200, 192, 0.3);
+      background: transparent;
+      border-radius: 999px;
+      padding: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .market-filter-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+    }
+    .market-ticket-strip {
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+      margin: 0 -24px;
+      padding-left: 24px;
+      padding-right: 24px;
+      scrollbar-width: none;
+    }
+    .market-ticket-strip::-webkit-scrollbar {
+      display: none;
+    }
+    .market-ticket-card {
+      flex: 0 0 min(288px, 74vw);
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .market-ticket-media {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      height: 220px;
+      background: var(--cream-2);
+    }
+    .market-ticket-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .market-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      padding: 3px 12px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 10px;
+      font-style: italic;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .market-badge--hot {
+      background: rgba(251, 250, 238, 0.9);
+      color: var(--primary);
+    }
+    .market-badge--soon {
+      background: rgba(233, 233, 221, 0.9);
+      color: var(--text-muted);
+    }
+    .market-ticket-title {
+      margin: 0;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 400;
+      font-size: 20px;
+      line-height: 28px;
+      color: var(--text);
+    }
+    .market-ticket-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: Manrope, sans-serif;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .market-ticket-meta svg {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+    }
+    .market-ticket-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 8px;
+    }
+    .market-price {
+      font-family: Manrope, sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--primary);
+    }
+    .market-price-note {
+      font-size: 12px;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+    .market-btn-pill {
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      padding: 8px 20px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      font-style: italic;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      box-shadow:
+        0 10px 15px -3px rgba(74, 101, 79, 0.2),
+        0 4px 6px -4px rgba(74, 101, 79, 0.2);
+    }
+    .market-btn-muted {
+      background: var(--sage);
+      color: var(--text-muted);
+      box-shadow: none;
+    }
+    .market-bento-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .market-prod-card {
+      background: #efeee3;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    .market-prod-card--tall {
+      grid-row: span 2;
+    }
+    .market-prod-thumb {
+      width: 100%;
+      overflow: hidden;
+      background: var(--cream-3);
+      position: relative;
+    }
+    .market-prod-thumb img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .market-prod-thumb--sq {
+      aspect-ratio: 1;
+    }
+    .market-prod-thumb--tall img {
+      height: 280px;
+    }
+    .market-prod-thumb--short img {
+      height: 122px;
+    }
+    .market-prod-cart {
+      width: 16px;
+      height: 16px;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+    .market-prod-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .market-prod-title {
+      margin: 0;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      font-style: italic;
+      line-height: 20px;
+      color: var(--text);
+    }
+    .market-prod-tagline {
+      margin: 0;
+      font-family: Manrope, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+      color: rgba(96, 103, 87, 0.7);
+    }
+    .market-prod-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 8px;
+    }
+    .market-prod-price {
+      font-family: Manrope, sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--primary);
+    }
+    .market-btn-outline-mini {
+      border: 1px solid var(--primary);
+      border-radius: 999px;
+      background: transparent;
+      padding: 5px 13px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 12px;
+      font-style: italic;
+      color: var(--primary);
+      cursor: pointer;
+    }
+    .market-btn-buy-row {
+      width: 100%;
+      margin-top: 8px;
+    }
+    .market-prod-card--wide {
+      grid-column: 1 / -1;
+    }
+
+    /* ----- 结算（自顶栏购买入口进入） ----- */
+    .screen.checkout-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 71;
+      min-height: 0;
+      padding-bottom: 0;
+      background: var(--cream);
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ----- 发布视频（Figma 77:158）：全屏覆盖层，仅 FAB 进入 ----- */
+    .screen.publish-screen {
+      --publish-label: var(--text-muted);
+      position: absolute;
+      inset: 0;
+      z-index: 70;
+      min-height: 0;
+      padding-bottom: 0;
+      background: var(--cream);
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .publish-topbar {
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 55;
+      height: var(--header-h);
+      padding: 0 16px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(251, 250, 238, 0.82);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    .publish-back {
+      border: none;
+      background: none;
+      padding: 8px;
+      margin: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .publish-back svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      color: var(--text);
+    }
+    .publish-back:active {
+      background: rgba(0, 0, 0, 0.06);
+    }
+    .publish-topbar__title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+      margin: 0;
+      color: var(--text);
+      line-height: 28px;
+    }
+    .publish-main {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 16px 24px 32px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .publish-section {
+      margin-bottom: 48px;
+    }
+    .publish-video-wrap {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(194, 200, 192, 0.1);
+      background: var(--cream-2);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .publish-video-wrap__inner {
+      position: relative;
+      height: min(457px, 56vh);
+      opacity: 0.92;
+    }
+    .publish-video-wrap__inner img.publish-video__fig {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .publish-video-wrap__inner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.06);
+      pointer-events: none;
+    }
+    .publish-play-hit {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .publish-play-pill {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      background: rgba(251, 250, 238, 0.8);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .publish-play-pill svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+      margin-left: 3px;
+    }
+    .publish-duration {
+      position: absolute;
+      z-index: 3;
+      right: 16px;
+      bottom: 16px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-family: Manrope, sans-serif;
+      font-size: 12px;
+      line-height: 16px;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .publish-video-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 8px 0;
+    }
+    .publish-video-actions button {
+      border: none;
+      background: none;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      line-height: 20px;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .publish-video-actions .is-muted {
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+    .publish-video-actions .is-accent {
+      color: var(--primary);
+    }
+    .publish-field {
+      margin-bottom: 40px;
+    }
+    .publish-field:last-child {
+      margin-bottom: 0;
+    }
+    .publish-field label {
+      display: block;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 12px;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 4px 8px;
+      line-height: 16px;
+      font-weight: 500;
+    }
+    .publish-field input[type="text"],
+    .publish-field textarea {
+      width: 100%;
+      border: none;
+      border-bottom: 2px solid rgba(194, 200, 192, 0.4);
+      background: transparent;
+      padding: 12px 4px 14px;
+      font-family: "Noto Serif SC", serif;
+      font-size: 18px;
+      color: var(--text);
+      border-radius: 0;
+      outline: none;
+    }
+    .publish-field textarea {
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 16px;
+      line-height: 24px;
+      min-height: 120px;
+      resize: vertical;
+    }
+    .publish-field input::placeholder,
+    .publish-field textarea::placeholder {
+      color: rgba(194, 200, 192, 0.85);
+      font-style: normal;
+    }
+    .publish-genre-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+    .publish-genre-head h3 {
+      margin: 0;
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 28px;
+      color: var(--text);
+    }
+    .publish-genre-head span {
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 12px;
+      color: rgba(96, 103, 87, 0.6);
+      white-space: nowrap;
+      line-height: 16px;
+    }
+    .publish-genre-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .publish-genre-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .publish-genre-chip {
+      flex: 0 0 auto;
+      border: 1px solid rgba(194, 200, 192, 0.2);
+      background: #efeee3;
+      color: rgba(96, 103, 87, 0.75);
+      border-radius: 12px;
+      padding: 10px 25px 11px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      line-height: 20px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .publish-genre-chip.is-selected {
+      background: var(--sage);
+      border-color: rgba(74, 101, 79, 0.2);
+      color: var(--text-muted);
+    }
+    .publish-genre-more {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(194, 200, 192, 0.2);
+      background: var(--cream-3);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      cursor: pointer;
+    }
+    .publish-genre-more svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      display: block;
+    }
+    .publish-toggles {
+      background: var(--cream-2);
+      border-radius: 16px;
+      padding: 8px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .publish-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 0;
+    }
+    .publish-toggle-row__left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+    .publish-toggle-row__left .publish-inline-icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      color: var(--primary);
+    }
+    .publish-toggle-row__left .publish-inline-icon--eye {
+      width: 24px;
+      height: 18px;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+    .publish-toggle-title {
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 16px;
+      line-height: 24px;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .publish-toggle-sub {
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 12px;
+      line-height: 16px;
+      color: rgba(96, 103, 87, 0.6);
+      margin: 0;
+    }
+    .publish-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+      background: var(--primary);
+      transition: background 0.2s ease;
+    }
+    .publish-switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 22px;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #fff;
+      box-sizing: border-box;
+      transition: left 0.2s ease;
+    }
+    .publish-switch.is-off {
+      background: rgba(194, 200, 192, 0.6);
+    }
+    .publish-switch.is-off::after {
+      left: 2px;
+    }
+    .publish-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 52;
+      margin-top: auto;
+      padding: 16px 24px calc(20px + var(--safe-b));
+      background: linear-gradient(to top, var(--cream) 10%, rgba(251, 250, 238, 0.97) 72%, rgba(251, 250, 238, 0));
+      flex-shrink: 0;
+    }
+    .publish-submit {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 28px;
+      color: #fff;
+      background: linear-gradient(113deg, var(--primary) 0%, var(--accent) 100%);
+      box-shadow: 0 20px 25px -5px rgba(74, 101, 79, 0.2), 0 8px 10px -6px rgba(74, 101, 79, 0.2);
+    }
+    .publish-submit:active {
+      transform: scale(0.98);
+    }
+    .publish-submit svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .publish-legal {
+      text-align: center;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 10px;
+      line-height: 15px;
+      letter-spacing: 1px;
+      color: rgba(96, 103, 87, 0.4);
+      margin: 16px 0 0;
+    }
+
+    input[type="file"] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="viewport">
+    <div class="phone" id="phone" role="application" aria-label="穿·越 移动端原型">
+      <div class="phone__scroll">
+      <!-- 侧栏 -->
+      <aside class="drawer" id="drawer" aria-hidden="true">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+          <strong class="serif" style="font-size:18px">菜单</strong>
+          <button type="button" class="icon-btn" id="drawerClose" aria-label="关闭">✕</button>
+        </div>
+        <nav class="section-pad" style="display:flex;flex-direction:column;gap:12px;font-size:15px">
+          <button type="button" class="link-like" data-go="home" style="border:none;background:none;padding:8px 0;text-align:left;cursor:pointer">大师主页</button>
+          <button type="button" class="link-like" data-go="lab-tryon" style="border:none;background:none;padding:8px 0;text-align:left;cursor:pointer">AI · 虚拟试衣</button>
+          <button type="button" class="link-like" data-go="treasure" style="border:none;background:none;padding:8px 0;text-align:left;cursor:pointer">藝境珍藏</button>
+          <button type="button" class="link-like" data-go="lab-audio" style="border:none;background:none;padding:8px 0;text-align:left;cursor:pointer">AI · 声学实验室</button>
+        </nav>
+      </aside>
+      <div class="drawer-scrim" id="drawerScrim" aria-hidden="true"></div>
+
+      <!-- 搜索弹窗 -->
+      <div class="modal-scrim" id="searchScrim"></div>
+      <div class="modal" id="searchModal" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+        <h3 id="searchTitle" class="serif" style="margin-top:0">搜索</h3>
+        <input id="searchField" type="search" placeholder="剧目 / 行当 / 藏品…" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);font-size:15px" />
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+          <button type="button" class="btn-secondary" id="searchCancel" style="padding:10px 16px">取消</button>
+          <button type="button" class="btn-primary" id="searchOk" style="padding:10px 18px">搜索</button>
+        </div>
+      </div>
+
+      <!-- 通用弹窗 -->
+      <div class="modal-scrim" id="infoScrim"></div>
+      <div class="modal" id="infoModal">
+        <h3 class="serif" id="infoTitle" style="margin-top:0">提示</h3>
+        <p id="infoBody" style="margin:0 0 16px;line-height:1.6;color:var(--text-2);font-size:14px"></p>
+        <button type="button" class="btn-primary" id="infoOk" style="width:100%;justify-content:center">知道了</button>
+      </div>
+
+      <div class="toast" id="toast" role="status"></div>
+
+      <!-- 顶栏 -->
+      <header class="topbar">
+        <div class="topbar__brand">
+          <button type="button" class="icon-btn" id="btnMenu" aria-label="打开菜单">
+            <img src="./assets/icon-menu.svg" alt="" />
+          </button>
+          <div class="topbar__logo-box serif">穿·越</div>
+          <h1 class="topbar__title topbar__title-inline">穿·越</h1>
+        </div>
+        <div class="topbar__right" id="topbarRight">
+          <button type="button" class="icon-btn" id="btnSearch" aria-label="搜索" title="搜索">
+            <img src="./assets/icon-search.svg" alt="" />
+          </button>
+          <button type="button" class="icon-btn" id="btnPurchaseEntry" aria-label="梨园市集购物" title="购物">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M6 7h15l-1.35 8.5H7.2L6 7zm0 0L4.75 4H2"
+                stroke="var(--primary)"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="9" cy="20" r="1.65" fill="var(--primary)" />
+              <circle cx="18" cy="20" r="1.65" fill="var(--primary)" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- AI 实验室子导航（虚拟试衣 / 声学） -->
+      <div class="lab-subtabs" id="labSubtabs" aria-hidden="true">
+        <button type="button" data-lab="tryon" class="is-active">虚拟试衣</button>
+        <button type="button" data-lab="audio">声学实验</button>
+      </div>
+
+      <!-- ========== 界面一：探索 / 首页 ========== -->
+      <section class="screen" id="screen-home" data-screen="home" hidden>
+        <div class="hero">
+          <div class="hero__bg" aria-hidden="true">
+            <img class="hero__texture" src="./assets/hero-texture.png" alt="" onerror="this.parentElement.style.background='linear-gradient(160deg,#e8e4d4,#c5c0ad)'" />
+            <img class="hero__model" src="./assets/hero-model.png" alt="" onerror="this.style.display='none'" />
+          </div>
+          <div class="hero__grad"></div>
+          <div class="hero__content">
+            <h2 class="hero__title">小三嬝</h2>
+            <p class="hero__subtitle">可互动数字艺术家</p>
+            <p class="hero__desc">
+              基于高精度扫描与神经网络算法，复刻一代宗师的身段与神韵。在虚拟空间中，传统戏曲与前沿科技跨时空交响。
+            </p>
+            <div class="hero__actions">
+              <button type="button" class="btn-primary" id="btnWatchShow">
+                <img src="./assets/icon-play.svg" alt="" width="20" height="20" style="filter:brightness(10)" />
+                立即观看演出
+              </button>
+              <button type="button" class="btn-secondary" id="btnListenHist">
+                <img src="./assets/icon-ear.svg" alt="" width="18" height="18" />
+                倾听历史音韵
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-pad" style="margin-top:8px">
+          <h3 class="bento-title">
+            人物介绍<br /><span style="font-weight:400;font-size:22px;color:var(--text-2)">Character Introduction</span>
+          </h3>
+          <article class="card card--cream">
+            <h4 class="serif" style="margin:0 0 8px;font-size:28px">小三嬝</h4>
+            <p class="serif" style="margin:40px 0 8px;font-size:22px;font-weight:700">Xiao Sanniao</p>
+            <p class="muted" style="font-size:15px;line-height:1.6;margin:0">
+              越剧《石斛花下》中的黄三嬝，是一位性格泼辣、深明大义的草莽女杰，后成为大将焦赞之妻。<br />为著名越剧艺术家胡嘉璐演绎
+            </p>
+            <div style="border-top:1px solid var(--line);margin-top:28px;padding-top:24px;display:flex;justify-content:space-between;align-items:flex-end">
+              <span class="serif" style="font-size:36px;font-weight:700;color:rgba(74,101,79,0.2)">01</span>
+            </div>
+          </article>
+
+          <article class="card card--darkgreen" id="cardMotion">
+            <div style="height:28px;margin-bottom:8px;opacity:0.95">
+              <img src="./assets/icon-body.svg" alt="" style="height:28px;filter:brightness(10)" />
+            </div>
+            <h4 class="serif" style="margin:0;font-size:18px;line-height:1.35">
+              身段动作展示术语<br />Body movement demonstration
+            </h4>
+            <p style="margin:8px 0 0;font-size:13px;color:rgba(204,234,207,0.85)">精度误差 &lt; 0.1mm</p>
+          </article>
+
+          <article class="card card--muted">
+            <div style="font-size:22px;margin-bottom:12px">⚡</div>
+            <h4 class="serif" style="margin:0;font-size:18px;line-height:1.35">
+              实时语音交互<br />Real-time voice interaction
+            </h4>
+            <p class="muted" style="margin:8px 0 0;font-size:13px">云端低延迟流式传输</p>
+          </article>
+
+          <div class="stage-card" id="cardStage">
+            <div class="stage-card__bg">
+              <img src="./assets/stage-bg.png" alt="" onerror="this.style.display='none'" />
+            </div>
+            <div class="stage-card__grad"></div>
+            <div class="stage-card__body">
+              <div class="serif" style="font-size:26px;font-weight:700">戏曲讲解</div>
+              <div style="font-size:14px;opacity:0.85;margin-top:6px;font-family:Manrope,sans-serif">看演出 Watch Performance</div>
+            </div>
+            <button type="button" class="stage-card__play" aria-label="播放">
+              <img src="./assets/icon-play-circle.svg" alt="" width="22" height="22" />
+            </button>
+          </div>
+
+          <article class="card card--sage">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+              <span style="font-size:20px">👁</span>
+              <span style="font-size:10px;letter-spacing:1px;font-family:Manrope;font-weight:700;opacity:0.45;color:var(--text)">AUDIO ARCHIVE</span>
+            </div>
+            <h4 class="serif" style="margin:0;font-size:17px;line-height:1.45">
+              听历史<br />Hear History
+            </h4>
+            <p class="muted" style="margin:8px 0 0;font-size:12px">收录1982年珍贵音频样板</p>
+          </article>
+        </div>
+
+        <div class="narrative">
+          <h2>匠心与算法的<span class="accent">共舞</span></h2>
+          <p style="font-size:17px;line-height:2;color:var(--text-2);font-style:italic;margin:0 0 20px">
+            我们不仅仅是在建立模型，而是在重塑记忆。每一根睫毛的颤动，每一片水袖的起落，都经过了老艺人亲自指导与AI深度学习的反复校准。
+          </p>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px;font-size:15px;color:var(--primary);font-style:italic">
+            <li>● 高精扫描还原 8K 贴纸纹理</li>
+            <li>● 骨骼仿真技术实现自然步伐</li>
+            <li>● 智能变声系统还原大师音色</li>
+          </ul>
+
+          <div class="quote-wrap" style="margin-bottom:56px">
+            <div class="quote-wrap__tex" aria-hidden="true">
+              <img src="./assets/quote-texture.png" alt="" onerror="this.parentElement.style.background='#e5e2d6'" />
+            </div>
+            <div class="quote-text">
+              “舞台是流动的卷轴，<br />演员是墨色中的留白。”
+            </div>
+            <div class="float-tag">非遗保护<br />数字化先行</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 梨园市集（Figma Body 1:1046） ========== -->
+      <section class="screen market-page" id="screen-market" data-screen="market" hidden>
+        <div class="market-main">
+          <div class="market-section">
+            <div class="market-search-wrap" id="marketSearchHit" role="button" tabindex="0" aria-label="打开搜索">
+              <span class="market-search-icon" aria-hidden="true">
+                <img src="./assets/icon-search.svg" alt="" />
+              </span>
+              <div class="market-search-input serif">搜索折子戏、周边或艺人...</div>
+            </div>
+            <button type="button" class="market-theater-btn" id="btnMarketTheater">
+              <span class="market-theater-ico" aria-hidden="true">⌂</span>
+              剧院入驻
+            </button>
+          </div>
+
+          <div class="market-section">
+            <div class="market-section-head">
+              <div>
+                <p class="market-eyebrow">Stage performances</p>
+                <h2 class="market-h2 serif">梨园票务</h2>
+              </div>
+              <button type="button" class="market-link" id="btnMarketTicketsAll">查看全部</button>
+            </div>
+            <div class="market-ticket-strip" aria-label="演出票务">
+              <article class="market-ticket-card">
+                <div class="market-ticket-media">
+                  <img src="./assets/academy-course-hero-fig.jpg" alt="" />
+                  <span class="market-badge market-badge--hot">热售中</span>
+                </div>
+                <div>
+                  <h3 class="market-ticket-title">《何文秀》· 经典演绎</h3>
+                  <div class="market-ticket-meta">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M3 10h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>2024.05.20 19:30</span>
+                  </div>
+                  <div class="market-ticket-actions">
+                    <div class="market-price">
+                      ¥180 <span class="market-price-note">起</span>
+                    </div>
+                    <button type="button" class="market-btn-pill js-checkout-trigger">立即购票</button>
+                  </div>
+                </div>
+              </article>
+              <article class="market-ticket-card">
+                <div class="market-ticket-media">
+                  <img src="./assets/stage-bg.png" alt="" onerror="this.parentElement.style.background='linear-gradient(160deg,#5c5346,#3d3830)'" />
+                  <span class="market-badge market-badge--soon">即将开售</span>
+                </div>
+                <div>
+                  <h3 class="market-ticket-title">《梁祝》· 蝶梦剧场</h3>
+                  <div class="market-ticket-meta">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M3 10h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>2024.06.12 20:00</span>
+                  </div>
+                  <div class="market-ticket-actions">
+                    <div class="market-price">
+                      ¥220 <span class="market-price-note">起</span>
+                    </div>
+                    <button type="button" class="market-btn-pill market-btn-muted js-market-remind">开售提醒</button>
+                  </div>
+                </div>
+              </article>
+              <article class="market-ticket-card">
+                <div class="market-ticket-media">
+                  <img src="./assets/academy-artist-1.jpg" alt="" />
+                  <span class="market-badge market-badge--hot">热售中</span>
+                </div>
+                <div>
+                  <h3 class="market-ticket-title">《西厢记》· 园林实景</h3>
+                  <div class="market-ticket-meta">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M3 10h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>2024.06.15 19:00</span>
+                  </div>
+                  <div class="market-ticket-actions">
+                    <div class="market-price">
+                      ¥380 <span class="market-price-note">起</span>
+                    </div>
+                    <button type="button" class="market-btn-pill js-checkout-trigger">立即购票</button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="market-section" style="padding-bottom:48px">
+            <div class="market-section-head">
+              <div>
+                <p class="market-eyebrow">Cultural artifacts</p>
+                <h2 class="market-h2 serif">雅市物语</h2>
+              </div>
+              <button type="button" class="market-filter-btn" id="btnMarketArtifactFilter" aria-label="筛选">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <circle cx="10" cy="6" r="2" fill="currentColor" />
+                  <circle cx="15" cy="12" r="2" fill="currentColor" />
+                  <circle cx="12" cy="18" r="2" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
+            <div class="market-bento-grid">
+              <article class="market-prod-card">
+                <div class="market-prod-thumb market-prod-thumb--sq">
+                  <img src="./assets/treasure-fan.png" alt="" />
+                </div>
+                <div class="market-prod-body">
+                  <div>
+                    <p class="market-prod-title">石斛花开系列手办</p>
+                    <p class="market-prod-tagline">Handmade artifact</p>
+                  </div>
+                  <div class="market-prod-footer">
+                    <span class="market-prod-price">¥169</span>
+                    <button type="button" class="icon-btn js-checkout-trigger" style="margin:-8px;padding:8px" aria-label="加入结算">
+                      <svg class="market-prod-cart" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 6h15l-1.5 9h-12L6 6zm0 0L5 3H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <circle cx="9" cy="20" r="1.5" fill="currentColor" />
+                        <circle cx="18" cy="20" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+              <article class="market-prod-card market-prod-card--tall">
+                <div class="market-prod-thumb market-prod-thumb--tall">
+                  <img src="./assets/academy-course-hero-fig.jpg" alt="" />
+                </div>
+                <div class="market-prod-body">
+                  <div>
+                    <p class="market-prod-title">越剧大师课</p>
+                    <p class="market-prod-tagline">Educational bundle</p>
+                  </div>
+                  <div class="market-prod-footer">
+                    <span class="market-prod-price">¥1,280</span>
+                    <button type="button" class="market-btn-outline-mini js-checkout-trigger">选购</button>
+                  </div>
+                </div>
+              </article>
+              <article class="market-prod-card">
+                <div class="market-prod-thumb market-prod-thumb--short">
+                  <img src="./assets/academy-course-a-fig.jpg" alt="" />
+                </div>
+                <div class="market-prod-body">
+                  <div>
+                    <p class="market-prod-title">梨园精选数字盲盒</p>
+                    <p class="market-prod-tagline">Limited drop</p>
+                  </div>
+                  <div class="market-prod-footer">
+                    <span class="market-prod-price">¥9.9/抽</span>
+                    <button type="button" class="icon-btn js-checkout-trigger" style="margin:-8px;padding:8px" aria-label="加入结算">
+                      <svg class="market-prod-cart" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 6h15l-1.5 9h-12L6 6zm0 0L5 3H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <circle cx="9" cy="20" r="1.5" fill="currentColor" />
+                        <circle cx="18" cy="20" r="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+              <article class="market-prod-card market-prod-card--wide">
+                <div class="market-prod-thumb market-prod-thumb--short" style="max-height:140px">
+                  <img src="./assets/academy-snippet-1.jpg" alt="" style="height:140px;width:100%;object-fit:cover" />
+                </div>
+                <div class="market-prod-body">
+                  <div>
+                    <p class="market-prod-title">戏韵茶礼套装</p>
+                    <p class="market-prod-tagline">Gift ritual</p>
+                  </div>
+                  <button type="button" class="market-btn-outline-mini market-btn-buy-row js-checkout-trigger">查看详情</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 艺苑研习（大师 Tab，Figma 1:895） ========== -->
+      <section class="screen is-active academy-page" id="screen-academy" data-screen="academy">
+        <div class="academy-hero">
+          <p class="academy-eyebrow">Educational Series</p>
+          <h2 class="academy-hero-title">艺苑<br />研习</h2>
+        </div>
+
+        <div class="academy-section">
+          <div class="academy-section-head">
+            <h2><span class="academy-dot" aria-hidden="true"></span>名家堂</h2>
+            <span class="academy-section-head__meta">Artist Profile</span>
+          </div>
+          <div class="academy-h-scroll" id="academyArtistScroll">
+            <article class="academy-artist-card">
+              <img class="academy-artist-card__photo" src="./assets/academy-artist-1.jpg" alt="" />
+              <div class="academy-artist-card__grad" aria-hidden="true"></div>
+              <div class="academy-artist-card__meta">
+                <p class="name">茅威涛</p>
+                <p class="role">Xiaosheng Master</p>
+              </div>
+            </article>
+            <article class="academy-artist-card">
+              <img class="academy-artist-card__photo" src="./assets/academy-artist-2b.jpg" alt="" />
+              <div class="academy-artist-card__grad" aria-hidden="true"></div>
+              <div class="academy-artist-card__meta">
+                <p class="name">张云霞</p>
+                <p class="role">Xiaosheng Master</p>
+              </div>
+            </article>
+            <article class="academy-artist-card">
+              <img class="academy-artist-card__photo" src="./assets/academy-artist-3.jpg" alt="" />
+              <div class="academy-artist-card__grad" aria-hidden="true"></div>
+              <div class="academy-artist-card__meta">
+                <p class="name">单仰萍</p>
+                <p class="role">Dan Master</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="academy-section">
+          <div class="academy-section-head">
+            <h2><span class="academy-dot" aria-hidden="true"></span>系列大师课</h2>
+            <button type="button" class="academy-link-all" id="btnAcademyViewAll">
+              View All
+              <span aria-hidden="true" style="font-size:10px">›</span>
+            </button>
+          </div>
+          <div class="academy-stack">
+            <article class="academy-course-featured" id="academyFeaturedCourse">
+              <div class="academy-course-featured__media">
+                <img src="./assets/academy-course-hero-fig.jpg" alt="" />
+              </div>
+              <div class="academy-course-featured__body">
+                <p class="academy-label-caps">Fundamental Techniques</p>
+                <h3>越剧唱腔：红楼梦里的清<br />音妙律</h3>
+                <p class="academy-course-meta">王文娟 · 宗师系列</p>
+              </div>
+            </article>
+            <article class="academy-course-small">
+              <div class="academy-course-small__thumb">
+                <img src="./assets/academy-course-a-fig.jpg" alt="" />
+              </div>
+              <h4>脸谱与妆容之美</h4>
+              <p class="sub">12 Lessons · Aesthetics</p>
+            </article>
+            <article class="academy-course-small">
+              <div class="academy-course-small__thumb">
+                <img src="./assets/academy-course-b-fig.jpg" alt="" />
+              </div>
+              <h4>伴奏乐理：板胡与弦意</h4>
+              <p class="sub">8 Lessons · Musicology</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="academy-section" style="margin-bottom:32px">
+          <div class="academy-section-head">
+            <h2><span class="academy-dot" aria-hidden="true"></span>研习片段</h2>
+            <span class="academy-section-head__meta">Snippets</span>
+          </div>
+          <div class="academy-snippet-grid">
+            <div class="academy-snippet">
+              <img class="academy-snippet__img" src="./assets/academy-snippet-1.jpg" alt="" />
+              <div class="academy-snippet__grad" aria-hidden="true">
+                <img src="./assets/academy-snippet-1-grad.png" alt="" />
+              </div>
+              <button type="button" class="academy-snippet__heart" aria-label="喜欢"><span>♥</span></button>
+              <div class="academy-snippet__cap">
+                <p class="user">@梨园学徒</p>
+                <p class="title">旦角指法教学（一）：兰花<br />指的柔度</p>
+              </div>
+            </div>
+            <div class="academy-snippet">
+              <img class="academy-snippet__img" src="./assets/academy-snippet-2.jpg" alt="" />
+              <div class="academy-snippet__grad" aria-hidden="true">
+                <img src="./assets/academy-snippet-2-grad.png" alt="" />
+              </div>
+              <button type="button" class="academy-snippet__heart" aria-label="喜欢"><span>♥</span></button>
+              <div class="academy-snippet__cap">
+                <p class="user">@武生小记</p>
+                <p class="title">晨练：翻身功的基础练习</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 界面二：虚拟试衣 ========== -->
+      <section class="screen" id="screen-lab-tryon" data-screen="lab-tryon" hidden>
+        <div class="lab-hero">
+          <div class="eyebrow">AI 实验室 · 虚拟试衣</div>
+          <h2>身临其境，<br />穿梭戏梦人间。</h2>
+          <p class="muted" style="font-size:15px;line-height:1.65;font-style:italic;margin:12px 0 0">
+            利用前沿 AI 影像合成技术<br />只需一张照片，即可领略越剧百年风华。<br />体验不同角色的妆造艺术，<br />感受传统美学的数字化新生。
+          </p>
+        </div>
+
+        <div class="upload-card" id="uploadZone">
+          <div class="upload-card__circle" aria-hidden="true">📷</div>
+          <h3 class="serif" style="margin:0 0 8px;font-size:22px">上传您的正面人像</h3>
+          <p class="muted" style="margin:0 0 20px;font-size:13px">支持 JPG, PNG 格式，文件小于 10MB</p>
+          <button type="button" class="btn-primary" id="btnPickFile" style="border-radius:6px;padding:12px 28px">开始合成</button>
+          <input type="file" id="fileInput" accept="image/png,image/jpeg" />
+        </div>
+
+        <div class="guide-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <span style="font-size:18px">💡</span>
+            <h3 class="serif" style="margin:0;font-size:18px">合成成功指南</h3>
+          </div>
+          <div class="guide-row">
+            <div class="guide-ico">☀</div>
+            <div>
+              <strong style="font-size:14px">光线充足</strong>
+              <p class="muted" style="margin:6px 0 0;font-size:12px;line-height:1.5">请在自然光环境下拍摄，避免阴影遮挡五官。</p>
+            </div>
+          </div>
+          <div class="guide-row">
+            <div class="guide-ico">▣</div>
+            <div>
+              <strong style="font-size:14px">正面平视</strong>
+              <p class="muted" style="margin:6px 0 0;font-size:12px;line-height:1.5">正视镜头，露出完整脸型，不要遮挡额头。</p>
+            </div>
+          </div>
+          <div class="guide-row">
+            <div class="guide-ico">☺</div>
+            <div>
+              <strong style="font-size:14px">表情自然</strong>
+              <p class="muted" style="margin:6px 0 0;font-size:12px;line-height:1.5">保持放松的微笑或平静表情，合成效果更佳。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="gallery-head">
+          <div>
+            <h3>经典行当选择</h3>
+            <p class="muted" style="margin:8px 0 0;font-size:14px;line-height:1.5;font-style:italic">
+              点击选择您想体验的经典越剧角色造型
+            </p>
+          </div>
+          <div class="gallery-arrows">
+            <button type="button" class="arrow-btn" id="scrollLeft" aria-label="向左">◀</button>
+            <button type="button" class="arrow-btn" id="scrollRight" aria-label="向右">▶</button>
+          </div>
+        </div>
+        <div class="h-scroll" id="roleScroll">
+          <article class="role-card is-selected" data-role="dan">
+            <div class="role-card__media">
+              <img src="./assets/role-dan.png" alt="" onerror="this.style.display='none'" />
+              <div class="role-card__grad"></div>
+              <span class="role-card__badge">精选</span>
+              <div class="role-card__label">
+                <div class="serif" style="font-size:18px;font-weight:700">旦 · 祝英台</div>
+                <div style="font-size:11px;opacity:0.85;letter-spacing:1.2px;font-family:Manrope,sans-serif;text-transform:uppercase">Dan Role</div>
+              </div>
+            </div>
+          </article>
+          <article class="role-card" data-role="sheng">
+            <div class="role-card__media">
+              <img src="./assets/role-sheng.png" alt="" onerror="this.style.display='none'" />
+              <div class="role-card__grad"></div>
+              <div class="role-card__label">
+                <div class="serif" style="font-size:18px;font-weight:700">生 · 梁山伯</div>
+                <div style="font-size:11px;opacity:0.85;letter-spacing:1.2px;font-family:Manrope,sans-serif;text-transform:uppercase">Sheng Role</div>
+              </div>
+            </div>
+          </article>
+          <article class="role-card" data-role="jing">
+            <div class="role-card__media">
+              <img src="./assets/role-jing.png" alt="" onerror="this.style.display='none'" />
+              <div class="role-card__grad"></div>
+              <div class="role-card__label">
+                <div class="serif" style="font-size:18px;font-weight:700">净 · 曹操</div>
+                <div style="font-size:11px;opacity:0.85;letter-spacing:1.2px;font-family:Manrope,sans-serif;text-transform:uppercase">Jing Role</div>
+              </div>
+            </div>
+          </article>
+          <article class="role-card" data-role="dan2">
+            <div class="role-card__media">
+              <img src="./assets/role-lindaiyu.png" alt="" onerror="this.style.display='none'" />
+              <div class="role-card__grad"></div>
+              <div class="role-card__label">
+                <div class="serif" style="font-size:18px;font-weight:700">旦 · 林黛玉</div>
+                <div style="font-size:11px;opacity:0.85;letter-spacing:1.2px;font-family:Manrope,sans-serif;text-transform:uppercase">Dan Role</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ========== 界面三：宝藏 ========== -->
+      <section class="screen" id="screen-treasure" data-screen="treasure" hidden>
+        <div class="treasure-hero-img">
+          <img src="./assets/treasure-fan.png" alt="" onerror="this.style.display='none'" />
+          <div class="ref-badge">REF NO: YJ-1922-SF</div>
+        </div>
+
+        <div class="treasure-copy">
+          <div class="rule">
+            <p class="featured">Featured Artifact</p>
+            <h2 class="big-title">
+              <span class="cn">硃砂扇影</span><br />
+              <span class="en">THE</span><br />
+              <span class="en">CINNABAR</span><br />
+              <span class="en">COLLECTION</span>
+            </h2>
+          </div>
+          <p class="desc">
+            A hundred-year-old Yueju silk fan, meticulously preserved. The delicate hand-painted plum blossoms emerge from the ivory framework like a whisper of ancient performance.
+          </p>
+          <button type="button" class="btn-gold" id="btnViewDetails">VIEW DETAILS</button>
+          <div style="clear:both"></div>
+        </div>
+
+        <div class="treasure-section-head">
+          <h3 class="serif" style="margin:0;font-size:28px;line-height:1.2;color:#fdf3df">藝境珍藏</h3>
+          <p style="margin:8px 0 0;font-size:14px;letter-spacing:1.6px;color:var(--dark-muted);font-family:'Noto Serif SC',serif">
+            ARCHIVAL<br />TREASURES<br />GALLERY
+          </p>
+          <div class="tabs-inline" id="treasureTabs">
+            <button type="button" class="is-active" data-tab="all">ALL</button>
+            <button type="button" data-tab="costumes">COSTUMES</button>
+            <button type="button" data-tab="props">PROPS</button>
+            <button type="button" data-tab="scripts">SCRIPTS</button>
+          </div>
+        </div>
+
+        <div class="wide-shot">
+          <img src="./assets/treasure-headdress.png" alt="" onerror="this.style.opacity=0" />
+        </div>
+
+        <div class="cream-panel">
+          <div class="thumb">
+            <img src="./assets/treasure-embroidery.png" alt="" onerror="this.style.display='none'" />
+          </div>
+          <h4>刺繡 · 牡丹袍</h4>
+          <p style="font-size:13px;line-height:1.65;color:var(--dark-muted);margin:0;font-family:'Noto Serif SC',serif">
+            A masterpiece of Su Embroidery, used by the legendary performers of the 1940s.
+          </p>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;font-size:12px;color:#8b716e;letter-spacing:1.2px;font-family:'Noto Serif SC',serif">
+            <span>EST. 1942</span>
+            <button type="button" class="icon-btn" aria-label="放大">🔍</button>
+          </div>
+        </div>
+
+        <div style="margin:0 16px 24px;height:380px;background:#1a1614;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:12px;background:linear-gradient(160deg,#5c4033,#2a1815);opacity:0.9"></div>
+          <img src="./assets/treasure-robe.png" alt="" style="position:relative;z-index:1;width:100%;height:72%;object-fit:cover;margin-top:12px;opacity:0.88" onerror="this.style.display='none'" />
+          <p style="position:absolute;left:16px;bottom:48px;z-index:2;margin:0;font-size:17px;color:#fdf3df;font-family:'Noto Serif SC',serif">戏服展示 · 牡丹戲夢</p>
+          <p style="position:absolute;left:16px;bottom:20px;z-index:2;margin:0;font-size:11px;letter-spacing:1.2px;color:rgba(200,198,197,0.65);text-transform:uppercase">Costume display</p>
+        </div>
+
+        <div class="cream-panel" style="min-height:280px">
+          <div class="thumb" style="height:220px;top:32px">
+            <img src="./assets/treasure-album.png" alt="" onerror="this.style.display='none'" />
+          </div>
+          <h4 style="margin-top:268px">戏服设计手稿 · 梁祝</h4>
+          <p style="font-size:13px;color:var(--dark-muted);font-family:'Noto Serif SC',serif;letter-spacing:1.2px;text-transform:uppercase">Costume design draft · Liang Zhu</p>
+        </div>
+
+        <div class="archive-block">
+          <div style="font-size:36px;margin-bottom:12px">📖</div>
+          <h4 class="serif" style="margin:0;font-size:22px">數位典藏計畫</h4>
+          <p style="font-size:13px;line-height:1.85;color:#ffc9c3;margin:16px 0 0;font-family:'Noto Serif SC',serif">
+            Explore the complete digital catalog of over 5,000 archival items from the National Museum collection.
+          </p>
+          <button type="button" class="btn-outline" id="btnEnterArchive">ENTER ARCHIVE</button>
+        </div>
+
+        <div class="heritage-cert">
+          <div class="heritage-cert__row">
+            <div class="heritage-cert__side-serif">遺產證書</div>
+            <div style="flex:1">
+              <h3 class="heritage-cert__title">CERTIFICATE<br />OF<br />HERITAGE</h3>
+              <p class="heritage-cert__sub">AUTHENTICITY GUARANTEED BY<br />THE DIGITAL ARCHIVE</p>
+            </div>
+          </div>
+          <hr class="heritage-cert__rule" />
+          <div class="heritage-cert__fields">
+            <div class="heritage-cert__field">
+              <div>ARTIFACT<br />IDENTIFICATION</div>
+              <div><strong>YJ-<br />TREASURE-<br />00921</strong></div>
+            </div>
+            <div class="heritage-cert__field">
+              <div>PROVENANCE</div>
+              <div><strong>Shao Xing,<br />Zhejiang Province</strong></div>
+            </div>
+            <div class="heritage-cert__field">
+              <div>ESTIMATED<br />ERA</div>
+              <div><strong>Republican Era<br />(1912–1949)</strong></div>
+            </div>
+          </div>
+          <div class="heritage-cert__badges">
+            <span>Verified</span><span>Archived</span><span>Protected</span>
+          </div>
+        </div>
+
+        <div class="treasure-outro">
+          <h3>Every stitch tells a story of a thousand acts.</h3>
+          <p>
+            Our high-resolution scanning technology allows you to explore artifacts at a microscopic level. From the individual silk threads of a performer's robe to the age-worn ink on a handwritten script, the Digital Treasure Museum preserves the soul of Yueju opera.
+          </p>
+          <div class="treasure-micro">
+            <div>
+              <img src="./assets/treasure-embroidery.png" alt="" />
+              <span>THREAD DETAIL</span>
+            </div>
+            <div>
+              <img src="./assets/treasure-album.png" alt="" />
+              <span>PARCHMENT</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 界面四：声学实验室 ========== -->
+      <section class="screen audio-page" id="screen-lab-audio" data-screen="lab-audio" hidden>
+        <div class="decor-pattern" aria-hidden="true">
+          <img src="./assets/pattern-silk.png" alt="" onerror="this.parentElement.style.background='radial-gradient(circle,#4a654f22,transparent)'" />
+        </div>
+        <div style="padding:88px 24px 24px;position:relative;z-index:1">
+          <span class="pill-badge">AI Synthesis</span>
+          <h2 class="serif" style="margin:16px 0 0;font-size:34px;font-weight:900">AI 声学实验室</h2>
+          <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:var(--text-2);font-style:italic">
+            通过人工智能技术，复现越剧流派神韵。输入唱词，选择流派，即刻生成极具东方韵味的越剧唱段。让古老的戏曲在算法中焕发新生。
+          </p>
+        </div>
+
+        <div class="input-card">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <img src="./assets/icon-audio.svg" alt="" width="18" height="18" onerror="this.style.display='none'" />
+            <span class="serif" style="font-weight:700;font-size:17px">唱词输入</span>
+            <span class="serif" style="font-size:12px;color:#c2c8c0">(Libretto)</span>
+          </div>
+          <div class="textarea-faux">
+            <textarea id="librettoInput" placeholder="在此处输入或粘贴您的唱词，&#10;例如：『天上掉下个林妹妹，似一朵轻云刚出岫...』"></textarea>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <span class="muted" style="font-size:12px;font-style:italic">建议长度：20-200字</span>
+            <button type="button" id="btnSampleLyrics" style="border:none;background:none;color:var(--primary);font-size:13px;cursor:pointer;font-style:italic;display:flex;align-items:center;gap:4px">
+              ✨ 尝试示例
+            </button>
+          </div>
+        </div>
+
+        <div style="padding:24px 24px 8px">
+          <h3 class="serif" style="margin:0;font-size:17px;font-weight:700">选择唱腔流派</h3>
+        </div>
+        <div style="padding:0 24px">
+          <div class="style-card is-selected" data-style="wang">
+            <div class="style-card__thumb">
+              <img src="./assets/style-wang.png" alt="" onerror="this.style.display='none'" />
+            </div>
+            <div style="flex:1">
+              <div class="style-card__head">
+                <strong class="serif" style="font-size:15px;line-height:1.45">王派 (Wang Style)</strong>
+                <span class="style-card__check" aria-hidden="true">✓</span>
+              </div>
+              <p class="muted" style="margin:8px 0 0;font-size:11px;line-height:1.55;font-style:italic">
+                由王文娟先生创立，清新脱俗，以情带声，委婉深沉。极其讲究韵味与情感的自然流露。
+              </p>
+            </div>
+          </div>
+          <div class="style-card" data-style="yuan">
+            <div class="style-card__thumb">
+              <img src="./assets/style-yuan.png" alt="" onerror="this.style.display='none'" />
+            </div>
+            <div style="flex:1">
+              <div class="style-card__head">
+                <strong class="serif" style="font-size:15px;line-height:1.45">袁派 (Yuan Style)</strong>
+                <span class="style-card__check" aria-hidden="true">✓</span>
+              </div>
+              <p class="muted" style="margin:8px 0 0;font-size:11px;line-height:1.55;font-style:italic">
+                由袁雪芬先生创立，韵味浓郁，质朴自然，真挚感人。唱腔醇厚，富有表现力与生命力。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-gradient" id="btnGenerateAudio">
+          <img src="./assets/icon-mic.svg" alt="" width="20" height="20" style="filter:brightness(10)" />
+          生成越剧唱腔
+        </button>
+
+        <div class="player-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div>
+              <div style="font-family:Manrope,sans-serif;font-weight:800;font-size:11px;color:var(--primary)">PLAYING NOW</div>
+              <h4 class="serif" style="margin:6px 0 0;font-size:18px">红楼梦 · 葬花辞</h4>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="icon-btn" style="background:var(--cream-2);border-radius:999px" aria-label="分享">↗</button>
+              <button type="button" class="icon-btn" style="background:var(--cream-2);border-radius:999px" aria-label="下载">⬇</button>
+            </div>
+          </div>
+          <div class="wave" aria-hidden="true">
+            <span style="height:18px"></span><span style="height:36px"></span><span style="height:52px"></span><span></span><span></span><span></span>
+            <span style="height:40px"></span><span style="height:28px"></span><span style="height:48px"></span><span style="height:22px"></span>
+          </div>
+          <div class="progress" id="progressTrack" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="38" tabindex="0">
+            <div class="progress__fill"></div>
+            <div class="progress__knob" id="progressKnob"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:8px;font-family:Manrope,sans-serif">
+            <span id="timeCur">01:12</span><span>03:45</span>
+          </div>
+          <div class="play-controls">
+            <button type="button" class="icon-btn" aria-label="上一段">⏮</button>
+            <button type="button" class="play-big" id="btnPlayPause" aria-label="播放">▶</button>
+            <button type="button" class="icon-btn" aria-label="下一段">⏭</button>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <strong style="color:var(--primary);font-style:normal">💡 小贴士</strong><br />
+          生成高质量唱腔的关键在于词句的平仄押韵。王派唱腔更适合表达柔美、凄婉的情感。
+        </div>
+      </section>
+
+      </div>
+      <!-- 发布视频：全屏层，不在大师滚动流内，仅 FAB 进入 / 返回退出 -->
+      <section class="screen publish-screen" id="screen-publish" data-screen="publish" hidden>
+        <header class="publish-topbar">
+          <button type="button" class="publish-back" id="btnPublishBack" aria-label="返回">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <h1 class="publish-topbar__title">发布视频</h1>
+        </header>
+        <div class="publish-main" id="publishMain">
+          <div class="publish-section">
+            <div class="publish-video-wrap">
+              <div class="publish-video-wrap__inner">
+                <img class="publish-video__fig" src="./assets/publish-hero-fig.jpg" alt="" />
+                <button type="button" class="publish-play-hit" id="btnPublishPreviewPlay" aria-label="播放预览">
+                  <span class="publish-play-pill">
+                    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+                      <path fill="var(--primary)" d="M9 7.5v9l7.5-4.5L9 7.5z" />
+                    </svg>
+                  </span>
+                </button>
+                <div class="publish-duration" aria-hidden="true">00:45</div>
+              </div>
+            </div>
+            <div class="publish-video-actions">
+              <button type="button" class="is-muted" id="btnPublishReselect">重选视频</button>
+              <button type="button" class="is-accent" id="btnPublishEditPreview">编辑预览</button>
+            </div>
+          </div>
+
+          <div class="publish-section">
+            <div class="publish-field">
+              <label for="publishTitle">视频标题</label>
+              <input id="publishTitle" type="text" autocomplete="off" placeholder="给你的作品起个雅致的名字..." />
+            </div>
+            <div class="publish-field">
+              <label for="publishNotes">心得体会</label>
+              <textarea id="publishNotes" rows="4" placeholder="分享你对这一折戏的理解与感悟..."></textarea>
+            </div>
+          </div>
+
+          <div class="publish-section">
+            <div class="publish-genre-head">
+              <h3>选择流派</h3>
+              <span>单选</span>
+            </div>
+            <div class="publish-genre-scroll" id="publishGenreScroll">
+              <button type="button" class="publish-genre-chip is-selected" data-genre="wang">王派</button>
+              <button type="button" class="publish-genre-chip" data-genre="yuan">袁派</button>
+              <button type="button" class="publish-genre-chip" data-genre="fan">范派</button>
+              <button type="button" class="publish-genre-chip" data-genre="yin">尹派</button>
+              <button type="button" class="publish-genre-chip" data-genre="fu">傅派</button>
+              <button type="button" class="publish-genre-more" id="btnPublishMoreGenres" aria-label="更多流派">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="publish-toggles">
+            <div class="publish-toggle-row">
+              <div class="publish-toggle-row__left">
+                <svg class="publish-inline-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="18" cy="6" r="2.5" fill="currentColor" />
+                  <circle cx="6" cy="12" r="2.5" fill="currentColor" />
+                  <circle cx="18" cy="18" r="2.5" fill="currentColor" />
+                  <path d="M16 7l-8 4M8 13l8 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                </svg>
+                <span class="publish-toggle-title">同步到动态</span>
+              </div>
+              <button type="button" class="publish-switch" id="publishToggleFeed" aria-pressed="true" aria-label="同步到动态"></button>
+            </div>
+            <div class="publish-toggle-row">
+              <div class="publish-toggle-row__left">
+                <svg class="publish-inline-icon publish-inline-icon--eye" viewBox="0 0 24 18" fill="none" aria-hidden="true">
+                  <ellipse cx="12" cy="9" rx="10" ry="5.5" stroke="currentColor" stroke-width="1.75" />
+                  <circle cx="12" cy="9" r="2.25" fill="currentColor" />
+                </svg>
+                <div>
+                  <div class="publish-toggle-title">公开可见</div>
+                  <p class="publish-toggle-sub">所有人均可在探索页看到此视频</p>
+                </div>
+              </div>
+              <button type="button" class="publish-switch" id="publishTogglePublic" aria-pressed="true" aria-label="公开可见"></button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="publish-footer">
+          <button type="button" class="publish-submit" id="btnPublishSubmit">
+            发布作品
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+            </svg>
+          </button>
+          <p class="publish-legal">发布即代表同意《越剧大观作品分享协议》</p>
+        </footer>
+      </section>
+
+      <!-- 结算全屏 -->
+      <section class="screen checkout-screen" id="screen-checkout" data-screen="checkout" hidden>
+        <header class="publish-topbar">
+          <button type="button" class="publish-back" id="btnCheckoutBack" aria-label="返回">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <h1 class="publish-topbar__title">确认订单</h1>
+        </header>
+        <div class="publish-main" id="checkoutMain">
+          <p style="margin:0 0 16px;font-size:14px;line-height:1.65;color:var(--text-2)">
+            核对场次与周边后提交，以下为示意订单项。
+          </p>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:var(--cream-2);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+              <div>
+                <div class="serif" style="font-size:16px;font-weight:700">《何文秀》· 经典演绎</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">2024.05.20 19:30 · 电子票 ×1</div>
+              </div>
+              <div style="font-family:Manrope,sans-serif;font-weight:700;color:var(--primary);white-space:nowrap">¥180</div>
+            </div>
+            <div style="background:var(--cream-2);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+              <div>
+                <div class="serif" style="font-size:16px;font-weight:700">石斛花开系列手办</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">周边 · 预售</div>
+              </div>
+              <div style="font-family:Manrope,sans-serif;font-weight:700;color:var(--primary);white-space:nowrap">¥169</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:24px;padding-top:16px;border-top:1px solid var(--line)">
+            <span style="font-size:15px;color:var(--text-muted)">合计</span>
+            <span style="font-family:Manrope,sans-serif;font-size:22px;font-weight:800;color:var(--primary)">¥349</span>
+          </div>
+        </div>
+        <footer class="publish-footer">
+          <button type="button" class="publish-submit" id="btnCheckoutSubmit">
+            提交订单
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </footer>
+      </section>
+
+      <button type="button" class="academy-fab is-visible" id="academyFab" aria-label="创作入口" title="发布作品">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <!-- 底栏 -->
+      <nav class="bottom-nav" aria-label="主导航">
+        <button type="button" class="nav-item" data-nav-target="explore" id="navExplore">
+          <img src="./assets/nav-explore.svg" alt="" /><span>探索</span>
+        </button>
+        <button type="button" class="nav-item is-active" data-nav-target="master" id="navMaster">
+          <img src="./assets/nav-master.svg" alt="" /><span>大师</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="treasure" id="navTreasure">
+          <img src="./assets/nav-treasure.svg" alt="" /><span>宝藏</span>
+        </button>
+        <button type="button" class="nav-item" data-nav-target="lab" id="navLab">
+          <img src="./assets/nav-lab.svg" alt="" /><span>AI实验室</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var phone = document.getElementById('phone');
+      var screens = {
+        home: document.getElementById('screen-home'),
+        academy: document.getElementById('screen-academy'),
+        market: document.getElementById('screen-market'),
+        publish: document.getElementById('screen-publish'),
+        checkout: document.getElementById('screen-checkout'),
+        treasure: document.getElementById('screen-treasure'),
+        'lab-tryon': document.getElementById('screen-lab-tryon'),
+        'lab-audio': document.getElementById('screen-lab-audio')
+      };
+      var topbar = document.querySelector('.topbar');
+      var bottomNav = document.querySelector('.bottom-nav');
+      var academyFab = document.getElementById('academyFab');
+      var navBtns = document.querySelectorAll('.nav-item');
+      var labSubtabs = document.getElementById('labSubtabs');
+      var subtabs = labSubtabs.querySelectorAll('button');
+      var drawer = document.getElementById('drawer');
+      var drawerScrim = document.getElementById('drawerScrim');
+      var toastEl = document.getElementById('toast');
+      var toastTimer;
+      var checkoutReturnScreen = 'academy';
+
+      var state = {
+        route: 'academy',
+        labPanel: 'tryon'
+      };
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastEl.classList.remove('is-visible');
+        }, 2200);
+      }
+
+      function setPhoneTheme(dark) {
+        phone.classList.toggle('phone--dark', dark);
+      }
+
+      function showScreen(key) {
+        Object.keys(screens).forEach(function (k) {
+          var el = screens[k];
+          var on = k === key;
+          el.classList.toggle('is-active', on);
+          el.hidden = !on;
+        });
+        state.route = key;
+        var immerse = key === 'publish' || key === 'checkout';
+        if (topbar) topbar.hidden = immerse;
+        if (bottomNav) bottomNav.hidden = immerse;
+
+        var dark = key === 'treasure';
+        setPhoneTheme(dark);
+        if (!immerse && topbar) {
+          document.querySelector('.topbar__logo-box').style.display = dark ? 'block' : '';
+          document.querySelector('.topbar__title-inline').style.display = dark ? 'none' : '';
+        }
+
+        labSubtabs.classList.toggle('is-visible', key === 'lab-tryon' || key === 'lab-audio');
+        labSubtabs.setAttribute('aria-hidden', labSubtabs.classList.contains('is-visible') ? 'false' : 'true');
+        subtabs.forEach(function (b) {
+          var lab = b.getAttribute('data-lab');
+          var active = (lab === 'tryon' && key === 'lab-tryon') || (lab === 'audio' && key === 'lab-audio');
+          b.classList.toggle('is-active', active);
+        });
+
+        if (academyFab) {
+          academyFab.classList.toggle('is-visible', key === 'academy');
+        }
+
+        phone.scrollTop = 0;
+        if (key === 'publish') {
+          var pm = document.getElementById('publishMain');
+          if (pm) pm.scrollTop = 0;
+        }
+        if (key === 'checkout') {
+          var cm = document.getElementById('checkoutMain');
+          if (cm) cm.scrollTop = 0;
+        }
+      }
+
+      function updateNavHighlight(target) {
+        navBtns.forEach(function (b) {
+          if (target == null) {
+            b.classList.remove('is-active');
+            return;
+          }
+          b.classList.toggle('is-active', b.getAttribute('data-nav-target') === target);
+        });
+      }
+
+      function syncNavForRoute(screenKey) {
+        if (screenKey === 'home') updateNavHighlight('explore');
+        else if (screenKey === 'academy') updateNavHighlight('master');
+        else if (screenKey === 'treasure') updateNavHighlight('treasure');
+        else if (screenKey === 'lab-tryon' || screenKey === 'lab-audio') updateNavHighlight('lab');
+        /* market / checkout：不改底栏高亮，保留进入购物前所在 Tab */
+      }
+
+      function goExplore() {
+        updateNavHighlight('explore');
+        showScreen('home');
+      }
+      function goMaster() {
+        updateNavHighlight('master');
+        showScreen('academy');
+      }
+      function goPublishVideo() {
+        showScreen('publish');
+      }
+      function goMarket() {
+        showScreen('market');
+      }
+      function goTreasure() {
+        updateNavHighlight('treasure');
+        showScreen('treasure');
+      }
+      function goCheckout() {
+        if (state.route !== 'checkout') {
+          checkoutReturnScreen = state.route;
+        }
+        showScreen('checkout');
+      }
+      function exitCheckout() {
+        var back = checkoutReturnScreen;
+        syncNavForRoute(back);
+        showScreen(back);
+      }
+      function goLabTryOn() {
+        updateNavHighlight('lab');
+        state.labPanel = 'tryon';
+        showScreen('lab-tryon');
+      }
+      function goLabAudio() {
+        updateNavHighlight('lab');
+        state.labPanel = 'audio';
+        showScreen('lab-audio');
+      }
+
+      navBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var t = btn.getAttribute('data-nav-target');
+          if (t === 'explore') goExplore();
+          else if (t === 'master') goMaster();
+          else if (t === 'treasure') goTreasure();
+          else if (t === 'lab') {
+            if (state.route === 'lab-tryon') goLabAudio();
+            else goLabTryOn();
+          }
+        });
+      });
+
+      subtabs.forEach(function (b) {
+        b.addEventListener('click', function () {
+          var lab = b.getAttribute('data-lab');
+          if (lab === 'tryon') goLabTryOn();
+          else goLabAudio();
+        });
+      });
+
+      document.querySelectorAll('[data-go]').forEach(function (link) {
+        link.addEventListener('click', function () {
+          var g = link.getAttribute('data-go');
+          closeDrawer();
+          if (g === 'home') goMaster();
+          else if (g === 'treasure') goTreasure();
+          else if (g === 'lab-tryon') goLabTryOn();
+          else if (g === 'lab-audio') goLabAudio();
+        });
+      });
+
+      function openDrawer() {
+        drawer.classList.add('is-open');
+        drawer.setAttribute('aria-hidden', 'false');
+        drawerScrim.classList.add('is-open');
+      }
+      function closeDrawer() {
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        drawerScrim.classList.remove('is-open');
+      }
+
+      document.getElementById('btnMenu').addEventListener('click', openDrawer);
+      document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+      drawerScrim.addEventListener('click', closeDrawer);
+
+      /* 搜索弹窗 */
+      var searchModal = document.getElementById('searchModal');
+      var searchScrim = document.getElementById('searchScrim');
+      function openSearch() {
+        searchModal.classList.add('is-open');
+        searchScrim.classList.add('is-open');
+        setTimeout(function () {
+          document.getElementById('searchField').focus();
+        }, 100);
+      }
+      function closeSearch() {
+        searchModal.classList.remove('is-open');
+        searchScrim.classList.remove('is-open');
+      }
+      document.getElementById('btnSearch').addEventListener('click', openSearch);
+      document.getElementById('searchCancel').addEventListener('click', closeSearch);
+      document.getElementById('searchOk').addEventListener('click', function () {
+        var q = document.getElementById('searchField').value.trim();
+        closeSearch();
+        showToast(q ? '搜索：' + q : '请试试剧目或行当关键字');
+      });
+      searchScrim.addEventListener('click', closeSearch);
+
+      document.getElementById('btnPurchaseEntry').addEventListener('click', function () {
+        goMarket();
+      });
+
+      var marketScreen = document.getElementById('screen-market');
+      var marketSearchHit = document.getElementById('marketSearchHit');
+      if (marketSearchHit) {
+        marketSearchHit.addEventListener('click', openSearch);
+        marketSearchHit.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openSearch();
+          }
+        });
+      }
+      document.getElementById('btnMarketTheater').addEventListener('click', function () {
+        showToast('剧院入驻登记（示意）');
+      });
+      document.getElementById('btnMarketTicketsAll').addEventListener('click', function () {
+        showToast('全部演出场次（示意）');
+      });
+      document.getElementById('btnMarketArtifactFilter').addEventListener('click', function () {
+        showToast('周边筛选（示意）');
+      });
+      if (marketScreen) {
+        marketScreen.addEventListener('click', function (e) {
+          var r = e.target.closest('.js-market-remind');
+          if (r) {
+            e.preventDefault();
+            showToast('已设置开售提醒（示意）');
+            return;
+          }
+          if (e.target.closest('.js-checkout-trigger')) {
+            goCheckout();
+          }
+        });
+      }
+
+      document.getElementById('btnCheckoutBack').addEventListener('click', exitCheckout);
+      document.getElementById('btnCheckoutSubmit').addEventListener('click', function () {
+        showToast('订单已提交（原型示意）');
+        exitCheckout();
+      });
+
+      /* 通用信息弹窗 */
+      var infoModal = document.getElementById('infoModal');
+      var infoScrim = document.getElementById('infoScrim');
+      function openInfo(title, body) {
+        document.getElementById('infoTitle').textContent = title;
+        document.getElementById('infoBody').textContent = body;
+        infoModal.classList.add('is-open');
+        infoScrim.classList.add('is-open');
+      }
+      function closeInfo() {
+        infoModal.classList.remove('is-open');
+        infoScrim.classList.remove('is-open');
+      }
+      document.getElementById('infoOk').addEventListener('click', closeInfo);
+      infoScrim.addEventListener('click', closeInfo);
+
+      /* 界面一交互 */
+      document.getElementById('btnWatchShow').addEventListener('click', function () {
+        openInfo('立即观看演出', '原型示意：此处可跳转播放器或预约场次。');
+      });
+      document.getElementById('btnListenHist').addEventListener('click', function () {
+        openInfo('倾听历史音韵', '原型示意：打开 1982 年珍贵音频档案试听。');
+      });
+      document.getElementById('cardMotion').addEventListener('click', function () {
+        showToast('身段术语清单（示意）');
+      });
+      document.querySelector('.stage-card').addEventListener('click', function (e) {
+        if (e.target.closest('.stage-card__play')) return;
+        openInfo('戏曲讲解', '原型示意：观看带讲解的演出切片。');
+      });
+      document.querySelector('.stage-card__play').addEventListener('click', function (e) {
+        e.stopPropagation();
+        openInfo('播放', '原型示意：开始播放讲解视频。');
+      });
+
+      /* 界面二 */
+      document.getElementById('btnPickFile').addEventListener('click', function () {
+        document.getElementById('fileInput').click();
+      });
+      document.getElementById('uploadZone').addEventListener('click', function (e) {
+        if (e.target.id !== 'btnPickFile') document.getElementById('fileInput').click();
+      });
+      document.getElementById('fileInput').addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+          showToast('已选择：' + this.files[0].name + '（示意上传）');
+        }
+      });
+      var roleScroll = document.getElementById('roleScroll');
+      document.getElementById('scrollLeft').addEventListener('click', function () {
+        roleScroll.scrollBy({ left: -200, behavior: 'smooth' });
+      });
+      document.getElementById('scrollRight').addEventListener('click', function () {
+        roleScroll.scrollBy({ left: 200, behavior: 'smooth' });
+      });
+      /* 鼠标滚轮纵向 → 横向滑动；触控板横滑仍由浏览器处理 */
+      roleScroll.addEventListener(
+        'wheel',
+        function (e) {
+          if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+          if (e.deltaY === 0) return;
+          roleScroll.scrollLeft += e.deltaY;
+          e.preventDefault();
+        },
+        { passive: false }
+      );
+      /* 按住拖拽横向滑动（松开后若发生过拖动则不触发卡片选中） */
+      var roleDrag = { active: false, pid: null, sx: 0, sscroll: 0, moved: false };
+      var suppressRoleCardClick = false;
+      roleScroll.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0 || e.pointerType === 'touch') return;
+        roleDrag.active = true;
+        roleDrag.pid = e.pointerId;
+        roleDrag.sx = e.clientX;
+        roleDrag.sscroll = roleScroll.scrollLeft;
+        roleDrag.moved = false;
+        roleScroll.classList.add('is-dragging');
+        roleScroll.setPointerCapture(e.pointerId);
+      });
+      roleScroll.addEventListener('pointermove', function (e) {
+        if (!roleDrag.active || e.pointerId !== roleDrag.pid) return;
+        var dx = e.clientX - roleDrag.sx;
+        if (Math.abs(dx) > 6) roleDrag.moved = true;
+        roleScroll.scrollLeft = roleDrag.sscroll - dx;
+      });
+      function endRoleDrag(e) {
+        if (!roleDrag.active || (e && e.pointerId !== roleDrag.pid)) return;
+        if (roleDrag.moved) suppressRoleCardClick = true;
+        roleDrag.active = false;
+        roleDrag.pid = null;
+        roleScroll.classList.remove('is-dragging');
+        try {
+          if (e) roleScroll.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+      }
+      roleScroll.addEventListener('pointerup', endRoleDrag);
+      roleScroll.addEventListener('pointercancel', endRoleDrag);
+      roleScroll.querySelectorAll('.role-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          if (suppressRoleCardClick) {
+            suppressRoleCardClick = false;
+            return;
+          }
+          roleScroll.querySelectorAll('.role-card').forEach(function (c) {
+            c.classList.remove('is-selected');
+          });
+          card.classList.add('is-selected');
+          showToast('已选择角色：' + (card.querySelector('.serif').textContent || ''));
+        });
+      });
+
+      /* 界面三 */
+      document.getElementById('btnViewDetails').addEventListener('click', function () {
+        openInfo('VIEW DETAILS', '藏品详情页（示意）：扇骨材质、传承谱系与高清多维影像。');
+      });
+      var treasureTabsEl = document.getElementById('treasureTabs');
+      treasureTabsEl.querySelectorAll('button').forEach(function (tb) {
+        tb.addEventListener('click', function () {
+          treasureTabsEl.querySelectorAll('button').forEach(function (x) {
+            x.classList.remove('is-active');
+          });
+          tb.classList.add('is-active');
+          showToast('筛选：' + tb.textContent);
+        });
+      });
+      document.getElementById('btnEnterArchive').addEventListener('click', function () {
+        showToast('进入数字化典藏（示意）');
+      });
+
+      /* 界面四 */
+      document.getElementById('btnSampleLyrics').addEventListener('click', function () {
+        document.getElementById('librettoInput').value =
+          '天上掉下个林妹妹，似一朵轻云刚出岫。只道他腹内草莽人轻浮，却原来骨格清奇非俗流。';
+        showToast('已填入示例唱词');
+      });
+      document.querySelectorAll('.style-card').forEach(function (sc) {
+        sc.addEventListener('click', function () {
+          document.querySelectorAll('.style-card').forEach(function (x) {
+            x.classList.remove('is-selected');
+          });
+          sc.classList.add('is-selected');
+          showToast('流派：' + (sc.querySelector('strong') && sc.querySelector('strong').textContent));
+        });
+      });
+      document.getElementById('btnGenerateAudio').addEventListener('click', function () {
+        var t = document.getElementById('librettoInput').value.trim();
+        openInfo('生成越剧唱腔', (t ? '已收到唱词（' + t.slice(0, 18) + '…）' : '使用默认意境文本') + ' — 原型示意：排队合成中。');
+      });
+      var playing = false;
+      document.getElementById('btnPlayPause').addEventListener('click', function () {
+        playing = !playing;
+        this.textContent = playing ? '❚❚' : '▶';
+        showToast(playing ? '播放中（示意）' : '已暂停');
+      });
+
+      /* 进度条拖动简化 */
+      var track = document.getElementById('progressTrack');
+      var knob = document.getElementById('progressKnob');
+      var fill = track.querySelector('.progress__fill');
+      function setProgress(pct) {
+        pct = Math.max(0, Math.min(100, pct));
+        fill.style.width = pct + '%';
+        knob.style.left = pct + '%';
+        track.setAttribute('aria-valuenow', Math.round(pct));
+      }
+      track.addEventListener('click', function (e) {
+        var r = track.getBoundingClientRect();
+        setProgress(((e.clientX - r.left) / r.width) * 100);
+      });
+
+      /* 艺苑研习 */
+      var academyArtistScroll = document.getElementById('academyArtistScroll');
+      if (academyArtistScroll) {
+        academyArtistScroll.addEventListener(
+          'wheel',
+          function (e) {
+            if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+            if (e.deltaY === 0) return;
+            academyArtistScroll.scrollLeft += e.deltaY;
+            e.preventDefault();
+          },
+          { passive: false }
+        );
+      }
+      document.getElementById('btnAcademyViewAll').addEventListener('click', function () {
+        showToast('全部大师课（示意）');
+      });
+      document.getElementById('academyFeaturedCourse').addEventListener('click', function () {
+        openInfo('越剧唱腔：红楼梦里的清音妙律', '原型示意：进入课程详情与章节播放。');
+      });
+      if (academyFab) {
+        academyFab.addEventListener('click', function () {
+          goPublishVideo();
+        });
+      }
+      document.getElementById('btnPublishBack').addEventListener('click', function () {
+        goMaster();
+      });
+      document.getElementById('btnPublishPreviewPlay').addEventListener('click', function () {
+        showToast('预览播放（示意）');
+      });
+      document.getElementById('btnPublishReselect').addEventListener('click', function () {
+        showToast('重选视频（示意）');
+      });
+      document.getElementById('btnPublishEditPreview').addEventListener('click', function () {
+        showToast('编辑预览（示意）');
+      });
+      document.getElementById('btnPublishMoreGenres').addEventListener('click', function () {
+        showToast('更多流派（示意）');
+      });
+      document.getElementById('btnPublishSubmit').addEventListener('click', function () {
+        var title = document.getElementById('publishTitle').value.trim();
+        openInfo(
+          '发布作品',
+          title ? '即将发布：「' + title + '」 — 原型示意。' : '请填写标题后再发布（原型示意）。'
+        );
+      });
+      function wirePublishSwitch(btn) {
+        btn.addEventListener('click', function () {
+          btn.classList.toggle('is-off');
+          btn.setAttribute('aria-pressed', btn.classList.contains('is-off') ? 'false' : 'true');
+        });
+      }
+      wirePublishSwitch(document.getElementById('publishToggleFeed'));
+      wirePublishSwitch(document.getElementById('publishTogglePublic'));
+      document.querySelectorAll('#publishGenreScroll .publish-genre-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          document.querySelectorAll('#publishGenreScroll .publish-genre-chip').forEach(function (c) {
+            c.classList.remove('is-selected');
+          });
+          chip.classList.add('is-selected');
+        });
+      });
+      var publishGenreScroll = document.getElementById('publishGenreScroll');
+      if (publishGenreScroll) {
+        publishGenreScroll.addEventListener(
+          'wheel',
+          function (e) {
+            if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+            if (e.deltaY === 0) return;
+            publishGenreScroll.scrollLeft += e.deltaY;
+            e.preventDefault();
+          },
+          { passive: false }
+        );
+      }
+
+      document.querySelectorAll('.academy-artist-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          var nameEl = card.querySelector('.name');
+          showToast('名家档案：' + (nameEl ? nameEl.textContent : ''));
+        });
+      });
+      document.querySelectorAll('.academy-course-small').forEach(function (c) {
+        c.addEventListener('click', function () {
+          var t = c.querySelector('h4');
+          showToast('课程：' + (t ? t.textContent : ''));
+        });
+      });
+      document.querySelectorAll('.academy-snippet__heart').forEach(function (h) {
+        h.addEventListener('click', function (e) {
+          e.stopPropagation();
+          showToast('已收藏片段（示意）');
+        });
+      });
+
+      /* 初始化：大师 Tab + 艺苑研习 */
+      goMaster();
+    })();
+  </script>
+</body>
+</html>
