@@ -3969,10 +3969,10 @@
 
       /* 界面一交互 */
       document.getElementById('btnWatchShow').addEventListener('click', function () {
-        openInfo('立刻对话', '原型示意：此处可进入文字对话界面。');
+        goChat();
       });
       document.getElementById('btnListenHist').addEventListener('click', function () {
-        goChat();
+        window.location.href = REALTIME_CHAT_URL;
       });
 
       /* 数字人对话 */
