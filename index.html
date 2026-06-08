@@ -111,7 +111,8 @@
     }
     .screen.is-active { display: block; }
     .screen.publish-screen.is-active,
-    .screen.checkout-screen.is-active {
+    .screen.checkout-screen.is-active,
+    .screen.chat-screen.is-active {
       display: flex;
     }
     @keyframes enter {
@@ -2291,6 +2292,307 @@
       margin: 16px 0 0;
     }
 
+    /* ----- 数字人对话（Figma 107:10） ----- */
+    .screen.chat-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 72;
+      min-height: 0;
+      padding-bottom: 0;
+      background: var(--cream);
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-topbar {
+      flex-shrink: 0;
+      position: relative;
+      z-index: 55;
+      height: var(--header-h);
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(251, 250, 238, 0.8);
+    }
+    .chat-topbar__title {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      margin: 0;
+      color: var(--primary);
+      line-height: 24px;
+      text-align: center;
+      justify-self: center;
+    }
+    .chat-topbar .icon-btn {
+      justify-self: end;
+    }
+    .chat-main {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-avatar-section {
+      position: relative;
+      flex-shrink: 0;
+      height: min(530px, 48vh);
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .chat-avatar-section__bg {
+      position: absolute;
+      inset: -26px -20px;
+      pointer-events: none;
+    }
+    .chat-avatar-section__bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(2px);
+      opacity: 0.4;
+    }
+    .chat-avatar-section__bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.2);
+      mix-blend-mode: saturation;
+    }
+    .chat-avatar-section__grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(251, 250, 238, 0) 0%,
+        rgba(251, 250, 238, 0.4) 50%,
+        var(--cream) 100%
+      );
+      pointer-events: none;
+    }
+    .chat-avatar-section__glow {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 45%;
+      background: rgba(74, 101, 79, 0.05);
+      filter: blur(32px);
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+    .chat-body {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      margin-top: -64px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-messages {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 0 24px 128px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .chat-msg {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .chat-msg--user {
+      justify-content: flex-end;
+    }
+    .chat-msg__avatar {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-msg__avatar--ai {
+      background: rgba(141, 170, 145, 0.3);
+      color: var(--primary);
+    }
+    .chat-msg__avatar--user {
+      background: var(--sage);
+      color: var(--primary);
+    }
+    .chat-msg__avatar svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .chat-msg__content {
+      max-width: calc(100% - 56px);
+      min-width: 0;
+    }
+    .chat-msg--user .chat-msg__content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .chat-bubble {
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 21px;
+      border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      font-size: 16px;
+      line-height: 1.625;
+    }
+    .chat-bubble--ai {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(194, 200, 192, 0.05);
+      border-top-left-radius: 0;
+      color: var(--text);
+      font-family: "Noto Serif SC", serif;
+      font-size: 18px;
+      line-height: 1.625;
+      max-width: 286px;
+    }
+    .chat-bubble--user {
+      background: rgba(141, 170, 145, 0.2);
+      border: 1px solid rgba(74, 101, 79, 0.1);
+      border-top-right-radius: 0;
+      color: #253f2b;
+      font-family: "Noto Sans SC", sans-serif;
+      font-weight: 500;
+    }
+    .chat-msg__meta {
+      font-family: Manrope, system-ui, sans-serif;
+      font-size: 10px;
+      line-height: 15px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+    .chat-typing {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      opacity: 0.5;
+    }
+    .chat-typing__avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      background: #efeee3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+    .chat-typing__dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chat-typing__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--primary);
+      animation: chat-dot 1.2s ease-in-out infinite;
+    }
+    .chat-typing__dot:nth-child(2) { animation-delay: 0.15s; }
+    .chat-typing__dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes chat-dot {
+      0%, 80%, 100% { opacity: 0.35; transform: scale(0.85); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+    .chat-input-wrap {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 24px;
+      z-index: 20;
+      max-width: 512px;
+      margin: 0 auto;
+    }
+    .chat-input-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 58px;
+      padding: 0 8px 0 24px;
+      border-radius: 9999px;
+      border: 1px solid #fff;
+      background: rgba(233, 233, 221, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px -12px rgba(27, 28, 21, 0.1);
+    }
+    .chat-input-bar__icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: rgba(66, 72, 66, 0.55);
+    }
+    .chat-input-bar__field {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      outline: none;
+    }
+    .chat-input-bar__field::placeholder {
+      color: rgba(66, 72, 66, 0.4);
+    }
+    .chat-input-bar__actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .chat-icon-btn {
+      border: none;
+      background: transparent;
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-2);
+      flex-shrink: 0;
+    }
+    .chat-icon-btn:active { transform: scale(0.94); }
+    .chat-icon-btn--send {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 10px 15px -3px rgba(74, 101, 79, 0.2), 0 4px 6px -4px rgba(74, 101, 79, 0.2);
+    }
+    .chat-icon-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
     input[type="file"] { display: none; }
   </style>
 </head>
@@ -3204,6 +3506,107 @@
         </footer>
       </section>
 
+      <!-- 数字人对话（Figma 107:10） -->
+      <section class="screen chat-screen" id="screen-chat" data-screen="chat" hidden>
+        <header class="chat-topbar">
+          <button type="button" class="publish-back" id="btnChatBack" aria-label="返回">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <h1 class="chat-topbar__title">小三嬝·越剧数字人</h1>
+          <button type="button" class="icon-btn" id="btnChatHistory" aria-label="对话历史">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M3 4v5h5" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M12 7v5l3 2" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </header>
+        <div class="chat-main">
+          <div class="chat-avatar-section" aria-hidden="true">
+            <div class="chat-avatar-section__bg">
+              <img src="./assets/chat-avatar-bg.png" alt="" onerror="this.src='./assets/hero-texture.png'" />
+            </div>
+            <div class="chat-avatar-section__grad"></div>
+            <div class="chat-avatar-section__glow"></div>
+          </div>
+          <div class="chat-body">
+            <div class="chat-messages" id="chatMessages">
+              <div class="chat-msg chat-msg--ai">
+                <div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    <path d="M7 14c1.2 1.5 3.3 2.2 5 2.2s3.8-.7 5-2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="8.5" cy="10" r="1" fill="currentColor" />
+                    <circle cx="15.5" cy="10" r="1" fill="currentColor" />
+                  </svg>
+                </div>
+                <div class="chat-msg__content">
+                  <div class="chat-bubble chat-bubble--ai">
+                    我是您的数字传承人。关于越剧唱腔、服饰或流派，您想了解什么？
+                  </div>
+                </div>
+              </div>
+              <div class="chat-msg chat-msg--user">
+                <div class="chat-msg__content">
+                  <div class="chat-bubble chat-bubble--user">什么是“小生”行当的特色？</div>
+                  <div class="chat-msg__meta">Scholar Candidate</div>
+                </div>
+                <div class="chat-msg__avatar chat-msg__avatar--user" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M5 19c1.5-3 4-4.5 7-4.5s5.5 1.5 7 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
+              <div class="chat-typing" id="chatTyping" aria-live="polite">
+                <div class="chat-typing__avatar" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="8.5" cy="10" r="1" fill="currentColor" />
+                    <circle cx="15.5" cy="10" r="1" fill="currentColor" />
+                  </svg>
+                </div>
+                <div class="chat-typing__dots" aria-hidden="true">
+                  <span class="chat-typing__dot"></span>
+                  <span class="chat-typing__dot"></span>
+                  <span class="chat-typing__dot"></span>
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-wrap">
+              <form class="chat-input-bar" id="chatInputForm">
+                <svg class="chat-input-bar__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 20h9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
+                </svg>
+                <input
+                  class="chat-input-bar__field"
+                  id="chatInput"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="咨询关于越剧的奥秘..."
+                />
+                <div class="chat-input-bar__actions">
+                  <button type="button" class="chat-icon-btn" id="btnChatMic" aria-label="语音实时对话">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.75" />
+                      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                  <button type="submit" class="chat-icon-btn chat-icon-btn--send" id="btnChatSend" aria-label="发送">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 结算全屏 -->
       <section class="screen checkout-screen" id="screen-checkout" data-screen="checkout" hidden>
         <header class="publish-topbar">
@@ -3282,6 +3685,7 @@
         publish: document.getElementById('screen-publish'),
         checkout: document.getElementById('screen-checkout'),
         treasure: document.getElementById('screen-treasure'),
+        chat: document.getElementById('screen-chat'),
         'lab-tryon': document.getElementById('screen-lab-tryon'),
         'lab-audio': document.getElementById('screen-lab-audio')
       };
@@ -3296,7 +3700,9 @@
       var toastEl = document.getElementById('toast');
       var toastTimer;
       var checkoutReturnScreen = 'academy';
+      var chatReturnScreen = 'home';
       var REALTIME_CHAT_URL = 'http://localhost:5173/session/6681a58f-3fd6-4027-ad98-03bd6dfc13a7?streaming_mode=direct&mode=standard&idle_video_url=/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4&idle_video_urls=[%22/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4%22]&visual_input={%22enabled%22:true,%22frame_interval_ms%22:1000,%22max_width%22:1280,%22max_height%22:720,%22jpeg_quality%22:0.78,%22max_frame_bytes%22:524288,%22ws_max_message_bytes%22:1048576,%22max_recent_frames%22:2,%22frame_ttl_ms%22:10000}&character_id=6f901915-bea3-46eb-97d6-9983ec8209ac';
+      var chatReplyTimer;
 
       var state = {
         route: 'academy',
@@ -3324,7 +3730,7 @@
           el.hidden = !on;
         });
         state.route = key;
-        var immerse = key === 'publish' || key === 'checkout';
+        var immerse = key === 'publish' || key === 'checkout' || key === 'chat';
         if (topbar) topbar.hidden = immerse;
         if (bottomNav) bottomNav.hidden = immerse;
 
@@ -3355,6 +3761,10 @@
         if (key === 'checkout') {
           var cm = document.getElementById('checkoutMain');
           if (cm) cm.scrollTop = 0;
+        }
+        if (key === 'chat') {
+          var chatMessages = document.getElementById('chatMessages');
+          if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
         }
       }
 
@@ -3404,6 +3814,17 @@
         var back = checkoutReturnScreen;
         syncNavForRoute(back);
         showScreen(back);
+      }
+      function goChat() {
+        if (state.route !== 'chat') {
+          chatReturnScreen = state.route;
+        }
+        showScreen('chat');
+      }
+      function exitChat() {
+        clearTimeout(chatReplyTimer);
+        syncNavForRoute(chatReturnScreen);
+        showScreen(chatReturnScreen);
       }
       function goLabTryOn() {
         updateNavHighlight('lab');
@@ -3551,6 +3972,70 @@
         openInfo('立刻对话', '原型示意：此处可进入文字对话界面。');
       });
       document.getElementById('btnListenHist').addEventListener('click', function () {
+        goChat();
+      });
+
+      /* 数字人对话 */
+      var chatMessagesEl = document.getElementById('chatMessages');
+      var chatTypingEl = document.getElementById('chatTyping');
+      var chatInputEl = document.getElementById('chatInput');
+
+      function scrollChatToBottom() {
+        if (chatMessagesEl) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+      }
+
+      function appendChatMessage(role, text) {
+        var row = document.createElement('div');
+        row.className = 'chat-msg' + (role === 'user' ? ' chat-msg--user' : ' chat-msg--ai');
+        if (role === 'user') {
+          row.innerHTML =
+            '<div class="chat-msg__content">' +
+            '<div class="chat-bubble chat-bubble--user"></div>' +
+            '</div>' +
+            '<div class="chat-msg__avatar chat-msg__avatar--user" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5" />' +
+            '<path d="M5 19c1.5-3 4-4.5 7-4.5s5.5 1.5 7 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>' +
+            '</div>';
+          row.querySelector('.chat-bubble--user').textContent = text;
+        } else {
+          row.innerHTML =
+            '<div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none"><path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />' +
+            '<circle cx="8.5" cy="10" r="1" fill="currentColor" /><circle cx="15.5" cy="10" r="1" fill="currentColor" /></svg>' +
+            '</div>' +
+            '<div class="chat-msg__content"><div class="chat-bubble chat-bubble--ai"></div></div>';
+          row.querySelector('.chat-bubble--ai').textContent = text;
+        }
+        chatMessagesEl.insertBefore(row, chatTypingEl);
+        scrollChatToBottom();
+      }
+
+      function sendChatMessage() {
+        var text = chatInputEl.value.trim();
+        if (!text) return;
+        chatInputEl.value = '';
+        appendChatMessage('user', text);
+        if (chatTypingEl) chatTypingEl.hidden = false;
+        scrollChatToBottom();
+        clearTimeout(chatReplyTimer);
+        chatReplyTimer = setTimeout(function () {
+          if (chatTypingEl) chatTypingEl.hidden = true;
+          appendChatMessage(
+            'ai',
+            '小生行当多扮演儒雅书生，唱腔清亮圆润，身段俊秀洒脱。您还想了解王派或范派小生的区别吗？'
+          );
+        }, 1400);
+      }
+
+      document.getElementById('btnChatBack').addEventListener('click', exitChat);
+      document.getElementById('btnChatHistory').addEventListener('click', function () {
+        showToast('对话历史（示意）');
+      });
+      document.getElementById('chatInputForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        sendChatMessage();
+      });
+      document.getElementById('btnChatMic').addEventListener('click', function () {
         window.location.href = REALTIME_CHAT_URL;
       });
       document.getElementById('cardMotion').addEventListener('click', function () {
