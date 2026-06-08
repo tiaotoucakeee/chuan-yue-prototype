@@ -212,8 +212,8 @@ const server = http.createServer(async (req, res) => {
   sendJSON(res, 404, { error: 'not found' });
 });
 
-server.listen(PORT, () => {
-  console.log(`[coze-proxy] http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[coze-proxy] http://0.0.0.0:${PORT}`);
   console.log(`[coze-proxy] chat -> POST /api/coze/chat`);
   if (!TOKEN) {
     console.warn('[coze-proxy] warning: COZE_API_TOKEN missing, copy .env.example to .env');

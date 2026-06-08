@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: chuan-yue-coze-proxy
+    runtime: node
+    rootDir: coze-proxy
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: COZE_BOT_ID
+        value: "7631445325035208742"
+      - key: COZE_API_TOKEN
+        sync: false
