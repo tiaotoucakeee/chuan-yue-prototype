@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fbfaee" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>穿·越 — 交互原型（四屏）</title>
   <link rel="icon" type="image/png" href="./favicon.png" />
   <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
@@ -32,6 +36,7 @@
       --shadow-phone: 0 24px 80px rgba(27, 28, 21, 0.18), 0 4px 2px rgba(0, 0, 0, 0.25);
       --shadow-nav: 0 -4px 32px -4px rgba(27, 28, 21, 0.05);
       --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
 
       /* 宝藏页深色 */
       --dark-bg: #1a1614;
@@ -2414,8 +2419,19 @@
       justify-content: center;
     }
     .chat-msg__avatar--ai {
+      width: 48px;
+      height: 48px;
       background: rgba(141, 170, 145, 0.3);
       color: var(--primary);
+      overflow: hidden;
+      padding: 0;
+    }
+    .chat-msg__avatar--ai img,
+    .chat-typing__avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .chat-msg__avatar--user {
       background: var(--sage);
@@ -2463,6 +2479,16 @@
       font-family: "Noto Sans SC", sans-serif;
       font-weight: 500;
     }
+    .chat-bubble--photo {
+      padding: 8px;
+    }
+    .chat-bubble__photo {
+      display: block;
+      width: 100%;
+      max-width: 220px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
     .chat-msg__meta {
       font-family: Manrope, system-ui, sans-serif;
       font-size: 10px;
@@ -2479,15 +2505,17 @@
       opacity: 0.5;
     }
     .chat-typing__avatar {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 9999px;
-      background: #efeee3;
+      background: rgba(141, 170, 145, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--primary);
       flex-shrink: 0;
+      overflow: hidden;
+      padding: 0;
     }
     .chat-typing__dots {
       display: flex;
@@ -2581,6 +2609,41 @@
     }
 
     input[type="file"] { display: none; }
+
+    /* 真机 / 窄屏：去掉桌面预览外壳，全屏铺满 */
+    @media (max-width: 480px) {
+      html, body {
+        height: 100%;
+        background: var(--cream);
+        overflow: hidden;
+      }
+      .viewport {
+        min-height: 100%;
+        height: 100%;
+        padding: 0;
+        align-items: stretch;
+      }
+      .phone {
+        width: 100%;
+        max-width: none;
+        height: 100dvh;
+        min-height: 100dvh;
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+      }
+      .phone--dark {
+        background: var(--dark-bg);
+      }
+      .topbar {
+        height: calc(var(--header-h) + var(--safe-t));
+        padding: var(--safe-t) 16px 0;
+      }
+      .lab-subtabs {
+        top: calc(var(--header-h) + var(--safe-t));
+      }
+    }
   </style>
 </head>
 <body>
@@ -2659,7 +2722,7 @@
       </div>
 
       <!-- ========== 界面一：探索 / 首页 ========== -->
-      <section class="screen" id="screen-home" data-screen="home" hidden>
+      <section class="screen is-active" id="screen-home" data-screen="home">
         <div class="hero">
           <div class="hero__bg" aria-hidden="true">
             <img class="hero__texture" src="./assets/hero-texture.png" alt="" onerror="this.parentElement.style.background='linear-gradient(160deg,#e8e4d4,#c5c0ad)'" />
@@ -2838,7 +2901,7 @@
               </article>
               <article class="market-ticket-card">
                 <div class="market-ticket-media">
-                  <img src="./assets/academy-artist-1.jpg" alt="" />
+                  <img src="./assets/mao-weitao-opera.png" alt="" />
                   <span class="market-badge market-badge--hot">热售中</span>
                 </div>
                 <div>
@@ -2952,7 +3015,7 @@
       </section>
 
       <!-- ========== 艺苑研习（大师 Tab，Figma 1:895） ========== -->
-      <section class="screen is-active academy-page" id="screen-academy" data-screen="academy">
+      <section class="screen academy-page" id="screen-academy" data-screen="academy" hidden>
         <div class="academy-hero">
           <p class="academy-eyebrow">Educational Series</p>
           <h2 class="academy-hero-title">艺苑<br />研习</h2>
@@ -2965,7 +3028,7 @@
           </div>
           <div class="academy-h-scroll" id="academyArtistScroll">
             <article class="academy-artist-card">
-              <img class="academy-artist-card__photo" src="./assets/academy-artist-1.jpg" alt="" />
+              <img class="academy-artist-card__photo" src="./assets/mao-weitao-opera.png" alt="" />
               <div class="academy-artist-card__grad" aria-hidden="true"></div>
               <div class="academy-artist-card__meta">
                 <p class="name">茅威涛</p>
@@ -2981,7 +3044,7 @@
               </div>
             </article>
             <article class="academy-artist-card">
-              <img class="academy-artist-card__photo" src="./assets/academy-artist-3.jpg" alt="" />
+              <img class="academy-artist-card__photo" src="./assets/shan-yangping-opera.png" alt="" />
               <div class="academy-artist-card__grad" aria-hidden="true"></div>
               <div class="academy-artist-card__meta">
                 <p class="name">单仰萍</p>
@@ -3502,11 +3565,12 @@
             </svg>
           </button>
           <h1 class="chat-topbar__title">小三嬝·越剧数字人</h1>
-          <button type="button" class="icon-btn" id="btnChatHistory" aria-label="对话历史">
+          <button type="button" class="icon-btn" id="btnChatClear" aria-label="清空对话">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" />
-              <path d="M3 4v5h5" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M12 7v5l3 2" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M3 6h18" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M19 6l-1.2 14a2 2 0 0 1-2 2H8.2a2 2 0 0 1-2-2L5 6" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M10 11v6M14 11v6" stroke="var(--primary)" stroke-width="1.75" stroke-linecap="round" />
             </svg>
           </button>
         </header>
@@ -3522,12 +3586,7 @@
             <div class="chat-messages" id="chatMessages">
               <div class="chat-msg chat-msg--ai">
                 <div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                    <path d="M7 14c1.2 1.5 3.3 2.2 5 2.2s3.8-.7 5-2.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                    <circle cx="8.5" cy="10" r="1" fill="currentColor" />
-                    <circle cx="15.5" cy="10" r="1" fill="currentColor" />
-                  </svg>
+                  <img src="./assets/chat-agent-avatar.png" alt="" />
                 </div>
                 <div class="chat-msg__content">
                   <div class="chat-bubble chat-bubble--ai">
@@ -3549,11 +3608,7 @@
               </div>
               <div class="chat-typing" id="chatTyping" aria-live="polite">
                 <div class="chat-typing__avatar" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                    <circle cx="8.5" cy="10" r="1" fill="currentColor" />
-                    <circle cx="15.5" cy="10" r="1" fill="currentColor" />
-                  </svg>
+                  <img src="./assets/chat-agent-avatar.png" alt="" />
                 </div>
                 <div class="chat-typing__dots" aria-hidden="true">
                   <span class="chat-typing__dot"></span>
@@ -3575,11 +3630,14 @@
                   autocomplete="off"
                   placeholder="咨询关于越剧的奥秘..."
                 />
+                <input type="file" id="chatPhotoInput" accept="image/*" hidden />
                 <div class="chat-input-bar__actions">
-                  <button type="button" class="chat-icon-btn" id="btnChatMic" aria-label="语音实时对话">
+                  <button type="button" class="chat-icon-btn" id="btnChatPhoto" aria-label="上传照片">
                     <svg viewBox="0 0 24 24" fill="none">
-                      <rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.75" />
-                      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                      <rect x="4" y="6" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.75" />
+                      <circle cx="9" cy="11" r="1.75" stroke="currentColor" stroke-width="1.75" />
+                      <path d="M4 16l4.2-4.2a1.2 1.2 0 0 1 1.7 0L14 16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M14 13l2.1-2.1a1.2 1.2 0 0 1 1.7 0L20 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </button>
                   <button type="submit" class="chat-icon-btn chat-icon-btn--send" id="btnChatSend" aria-label="发送">
@@ -3639,17 +3697,17 @@
         </footer>
       </section>
 
-      <button type="button" class="academy-fab is-visible" id="academyFab" aria-label="创作入口" title="发布作品">
+      <button type="button" class="academy-fab" id="academyFab" aria-label="创作入口" title="发布作品">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
       <!-- 底栏 -->
       <nav class="bottom-nav" aria-label="主导航">
-        <button type="button" class="nav-item" data-nav-target="explore" id="navExplore">
+        <button type="button" class="nav-item is-active" data-nav-target="explore" id="navExplore">
           <img src="./assets/nav-explore.svg" alt="" /><span>探索</span>
         </button>
-        <button type="button" class="nav-item is-active" data-nav-target="master" id="navMaster">
+        <button type="button" class="nav-item" data-nav-target="master" id="navMaster">
           <img src="./assets/nav-master.svg" alt="" /><span>大师</span>
         </button>
         <button type="button" class="nav-item" data-nav-target="treasure" id="navTreasure">
@@ -3686,7 +3744,7 @@
       var drawerScrim = document.getElementById('drawerScrim');
       var toastEl = document.getElementById('toast');
       var toastTimer;
-      var checkoutReturnScreen = 'academy';
+      var checkoutReturnScreen = 'home';
       var chatReturnScreen = 'home';
       var REALTIME_CHAT_URL = 'http://localhost:5173/session/6681a58f-3fd6-4027-ad98-03bd6dfc13a7?streaming_mode=direct&mode=standard&idle_video_url=/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4&idle_video_urls=[%22/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4%22]&visual_input={%22enabled%22:true,%22frame_interval_ms%22:1000,%22max_width%22:1280,%22max_height%22:720,%22jpeg_quality%22:0.78,%22max_frame_bytes%22:524288,%22ws_max_message_bytes%22:1048576,%22max_recent_frames%22:2,%22frame_ttl_ms%22:10000}&character_id=6f901915-bea3-46eb-97d6-9983ec8209ac';
       var COZE_PROXY_ORIGIN =
@@ -3699,7 +3757,7 @@
       var chatSending = false;
 
       var state = {
-        route: 'academy',
+        route: 'home',
         labPanel: 'tryon'
       };
 
@@ -3972,9 +4030,51 @@
       var chatMessagesEl = document.getElementById('chatMessages');
       var chatTypingEl = document.getElementById('chatTyping');
       var chatInputEl = document.getElementById('chatInput');
+      var chatPhotoInputEl = document.getElementById('chatPhotoInput');
+      var CHAT_AGENT_AVATAR = './assets/chat-agent-avatar.png';
+
+      function aiAvatarHtml() {
+        return '<img src="' + CHAT_AGENT_AVATAR + '" alt="" />';
+      }
+
+      function userAvatarHtml() {
+        return (
+          '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5" />' +
+          '<path d="M5 19c1.5-3 4-4.5 7-4.5s5.5 1.5 7 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>'
+        );
+      }
 
       function scrollChatToBottom() {
         if (chatMessagesEl) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+      }
+
+      function getChatWelcomeMessageHtml() {
+        return (
+          '<div class="chat-msg chat-msg--ai">' +
+          '<div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">' +
+          aiAvatarHtml() +
+          '</div>' +
+          '<div class="chat-msg__content">' +
+          '<div class="chat-bubble chat-bubble--ai">' +
+          '我是您的数字传承人。关于越剧唱腔、服饰或流派，您想了解什么？' +
+          '</div></div></div>'
+        );
+      }
+
+      function clearChatMessages() {
+        if (chatSending) {
+          showToast('正在回复中，请稍候');
+          return;
+        }
+        chatMessagesEl.querySelectorAll('.chat-msg').forEach(function (node) {
+          node.remove();
+        });
+        chatTypingEl.insertAdjacentHTML('beforebegin', getChatWelcomeMessageHtml());
+        chatTypingEl.hidden = true;
+        chatInputEl.value = '';
+        localStorage.removeItem(COZE_CONV_KEY);
+        scrollChatToBottom();
+        showToast('对话已清空');
       }
 
       function appendChatMessage(role, text) {
@@ -3986,15 +4086,13 @@
             '<div class="chat-bubble chat-bubble--user"></div>' +
             '</div>' +
             '<div class="chat-msg__avatar chat-msg__avatar--user" aria-hidden="true">' +
-            '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5" />' +
-            '<path d="M5 19c1.5-3 4-4.5 7-4.5s5.5 1.5 7 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>' +
+            userAvatarHtml() +
             '</div>';
           row.querySelector('.chat-bubble--user').textContent = text;
         } else {
           row.innerHTML =
             '<div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">' +
-            '<svg viewBox="0 0 24 24" fill="none"><path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />' +
-            '<circle cx="8.5" cy="10" r="1" fill="currentColor" /><circle cx="15.5" cy="10" r="1" fill="currentColor" /></svg>' +
+            aiAvatarHtml() +
             '</div>' +
             '<div class="chat-msg__content"><div class="chat-bubble chat-bubble--ai"></div></div>';
           row.querySelector('.chat-bubble--ai').textContent = text;
@@ -4008,8 +4106,7 @@
         row.className = 'chat-msg chat-msg--ai';
         row.innerHTML =
           '<div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">' +
-          '<svg viewBox="0 0 24 24" fill="none"><path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />' +
-          '<circle cx="8.5" cy="10" r="1" fill="currentColor" /><circle cx="15.5" cy="10" r="1" fill="currentColor" /></svg>' +
+          aiAvatarHtml() +
           '</div>' +
           '<div class="chat-msg__content"><div class="chat-bubble chat-bubble--ai"></div></div>';
         chatMessagesEl.insertBefore(row, chatTypingEl);
@@ -4128,15 +4225,23 @@
       }
 
       document.getElementById('btnChatBack').addEventListener('click', exitChat);
-      document.getElementById('btnChatHistory').addEventListener('click', function () {
-        showToast('对话历史（示意）');
-      });
+      document.getElementById('btnChatClear').addEventListener('click', clearChatMessages);
       document.getElementById('chatInputForm').addEventListener('submit', function (e) {
         e.preventDefault();
         sendChatMessage();
       });
-      document.getElementById('btnChatMic').addEventListener('click', function () {
-        window.location.href = REALTIME_CHAT_URL;
+      document.getElementById('btnChatPhoto').addEventListener('click', function () {
+        chatPhotoInputEl.click();
+      });
+      chatPhotoInputEl.addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        this.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+          showToast('请选择图片文件');
+          return;
+        }
+        showToast('功能研发中');
       });
       document.getElementById('cardMotion').addEventListener('click', function () {
         showToast('身段术语清单（示意）');
@@ -4380,8 +4485,8 @@
         });
       });
 
-      /* 初始化：大师 Tab + 艺苑研习 */
-      goMaster();
+      /* 初始化：探索 Tab + 首页 */
+      goExplore();
     })();
   </script>
 </body>
