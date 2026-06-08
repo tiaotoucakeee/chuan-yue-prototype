@@ -2339,25 +2339,22 @@
       overflow: hidden;
     }
     .chat-avatar-section {
-      position: relative;
-      flex-shrink: 0;
-      height: min(530px, 48vh);
+      position: absolute;
+      inset: 0;
       overflow: hidden;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
+      pointer-events: none;
+      z-index: 0;
     }
     .chat-avatar-section__bg {
       position: absolute;
       inset: -26px -20px;
-      pointer-events: none;
     }
     .chat-avatar-section__bg img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       filter: blur(2px);
-      opacity: 0.4;
+      opacity: 0.28;
     }
     .chat-avatar-section__bg::after {
       content: "";
@@ -2371,37 +2368,29 @@
       inset: 0;
       background: linear-gradient(
         180deg,
-        rgba(251, 250, 238, 0) 0%,
-        rgba(251, 250, 238, 0.4) 50%,
+        rgba(251, 250, 238, 0.15) 0%,
+        rgba(251, 250, 238, 0.55) 45%,
         var(--cream) 100%
       );
-      pointer-events: none;
     }
     .chat-avatar-section__glow {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 45%;
-      background: rgba(74, 101, 79, 0.05);
-      filter: blur(32px);
-      border-radius: 9999px;
-      pointer-events: none;
+      display: none;
     }
     .chat-body {
       flex: 1;
       min-height: 0;
       position: relative;
-      margin-top: -64px;
+      z-index: 1;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
     .chat-messages {
       flex: 1;
       min-height: 0;
       overflow-x: hidden;
       overflow-y: auto;
-      padding: 0 24px 128px;
+      padding: 20px 24px 16px;
       display: flex;
       flex-direction: column;
       gap: 32px;
@@ -2464,7 +2453,7 @@
       font-family: "Noto Serif SC", serif;
       font-size: 18px;
       line-height: 1.625;
-      max-width: 286px;
+      max-width: min(320px, calc(100% - 8px));
     }
     .chat-bubble--user {
       background: rgba(141, 170, 145, 0.2);
@@ -2519,13 +2508,11 @@
       40% { opacity: 1; transform: scale(1); }
     }
     .chat-input-wrap {
-      position: absolute;
-      left: 16px;
-      right: 16px;
-      bottom: 24px;
+      position: relative;
+      flex-shrink: 0;
       z-index: 20;
-      max-width: 512px;
-      margin: 0 auto;
+      padding: 8px 16px calc(16px + var(--safe-b));
+      background: linear-gradient(180deg, rgba(251, 250, 238, 0) 0%, rgba(251, 250, 238, 0.92) 35%, var(--cream) 100%);
     }
     .chat-input-bar {
       position: relative;
