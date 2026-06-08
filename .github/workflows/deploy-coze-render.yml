@@ -1,0 +1,21 @@
+name: Deploy Coze Proxy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'coze-proxy/**'
+      - 'render.yaml'
+
+jobs:
+  deploy:
+    if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render redeploy
+        run: |
+          curl -fsS -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache":"do_not_clear"}'
