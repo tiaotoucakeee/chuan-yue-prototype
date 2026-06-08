@@ -3689,7 +3689,10 @@
       var checkoutReturnScreen = 'academy';
       var chatReturnScreen = 'home';
       var REALTIME_CHAT_URL = 'http://localhost:5173/session/6681a58f-3fd6-4027-ad98-03bd6dfc13a7?streaming_mode=direct&mode=standard&idle_video_url=/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4&idle_video_urls=[%22/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4%22]&visual_input={%22enabled%22:true,%22frame_interval_ms%22:1000,%22max_width%22:1280,%22max_height%22:720,%22jpeg_quality%22:0.78,%22max_frame_bytes%22:524288,%22ws_max_message_bytes%22:1048576,%22max_recent_frames%22:2,%22frame_ttl_ms%22:10000}&character_id=6f901915-bea3-46eb-97d6-9983ec8209ac';
-      var chatReplyTimer;
+      var COZE_CHAT_API = 'http://localhost:8787/api/coze/chat';
+      var COZE_CONV_KEY = 'coze_conversation_id';
+      var COZE_USER_KEY = 'coze_user_id';
+      var chatSending = false;
 
       var state = {
         route: 'academy',
@@ -3809,7 +3812,6 @@
         showScreen('chat');
       }
       function exitChat() {
-        clearTimeout(chatReplyTimer);
         syncNavForRoute(chatReturnScreen);
         showScreen(chatReturnScreen);
       }
@@ -3997,21 +3999,128 @@
         scrollChatToBottom();
       }
 
+      function createStreamingAIMessage() {
+        var row = document.createElement('div');
+        row.className = 'chat-msg chat-msg--ai';
+        row.innerHTML =
+          '<div class="chat-msg__avatar chat-msg__avatar--ai" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M9 11c1.5-2 4.5-2 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />' +
+          '<circle cx="8.5" cy="10" r="1" fill="currentColor" /><circle cx="15.5" cy="10" r="1" fill="currentColor" /></svg>' +
+          '</div>' +
+          '<div class="chat-msg__content"><div class="chat-bubble chat-bubble--ai"></div></div>';
+        chatMessagesEl.insertBefore(row, chatTypingEl);
+        return row.querySelector('.chat-bubble--ai');
+      }
+
+      function readChatSSE(reader, onEvent) {
+        var decoder = new TextDecoder();
+        var buffer = '';
+        function processBlock(block) {
+          if (!block.trim()) return;
+          var eventName = 'message';
+          var data = '';
+          block.split('\n').forEach(function (line) {
+            if (line.indexOf('event:') === 0) eventName = line.slice(6).trim();
+            else if (line.indexOf('data:') === 0) data = line.slice(5).trim();
+          });
+          if (data) onEvent(eventName, data);
+        }
+        function pump() {
+          return reader.read().then(function (result) {
+            if (result.done) {
+              if (buffer.trim()) processBlock(buffer);
+              return;
+            }
+            buffer += decoder.decode(result.value, { stream: true });
+            var parts = buffer.split('\n\n');
+            buffer = parts.pop() || '';
+            for (var i = 0; i < parts.length; i++) {
+              processBlock(parts[i]);
+            }
+            return pump();
+          });
+        }
+        return pump();
+      }
+
+      function getCozeUserId() {
+        var id = localStorage.getItem(COZE_USER_KEY);
+        if (!id) {
+          id = 'user_' + Math.random().toString(36).slice(2, 10);
+          localStorage.setItem(COZE_USER_KEY, id);
+        }
+        return id;
+      }
+
       function sendChatMessage() {
         var text = chatInputEl.value.trim();
-        if (!text) return;
+        if (!text || chatSending) return;
         chatInputEl.value = '';
         appendChatMessage('user', text);
         if (chatTypingEl) chatTypingEl.hidden = false;
         scrollChatToBottom();
-        clearTimeout(chatReplyTimer);
-        chatReplyTimer = setTimeout(function () {
-          if (chatTypingEl) chatTypingEl.hidden = true;
-          appendChatMessage(
-            'ai',
-            '小生行当多扮演儒雅书生，唱腔清亮圆润，身段俊秀洒脱。您还想了解王派或范派小生的区别吗？'
-          );
-        }, 1400);
+
+        chatSending = true;
+        document.getElementById('btnChatSend').disabled = true;
+
+        var aiBubble = null;
+        var gotContent = false;
+
+        fetch(COZE_CHAT_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream'
+          },
+          body: JSON.stringify({
+            message: text,
+            user_id: getCozeUserId(),
+            conversation_id: localStorage.getItem(COZE_CONV_KEY) || ''
+          })
+        })
+          .then(function (res) {
+            if (!res.ok) {
+              return res.text().then(function (raw) {
+                var msg = '对话请求失败';
+                try {
+                  var data = JSON.parse(raw);
+                  if (data && data.error) msg = data.error;
+                } catch (e) {}
+                throw new Error(msg);
+              });
+            }
+            if (!res.body) throw new Error('浏览器不支持流式响应');
+            return readChatSSE(res.body.getReader(), function (eventName, dataStr) {
+              var payload = JSON.parse(dataStr);
+              if (eventName === 'meta' && payload.conversation_id) {
+                localStorage.setItem(COZE_CONV_KEY, payload.conversation_id);
+                return;
+              }
+              if (eventName === 'delta' && payload.content) {
+                if (chatTypingEl) chatTypingEl.hidden = true;
+                if (!aiBubble) aiBubble = createStreamingAIMessage();
+                aiBubble.textContent += payload.content;
+                gotContent = true;
+                scrollChatToBottom();
+                return;
+              }
+              if (eventName === 'error') {
+                throw new Error(payload.error || 'Coze 对话失败');
+              }
+            });
+          })
+          .catch(function (err) {
+            if (chatTypingEl) chatTypingEl.hidden = true;
+            showToast(err.message || 'Coze 对话失败');
+          })
+          .finally(function () {
+            if (chatTypingEl) chatTypingEl.hidden = true;
+            if (!gotContent && !aiBubble) {
+              /* 无内容时不追加空气泡 */
+            }
+            chatSending = false;
+            document.getElementById('btnChatSend').disabled = false;
+          });
       }
 
       document.getElementById('btnChatBack').addEventListener('click', exitChat);

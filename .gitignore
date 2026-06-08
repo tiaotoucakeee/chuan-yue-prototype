@@ -1,2 +1,4 @@
 .DS_Store
 Thumbs.db
+coze-proxy/node_modules/
+coze-proxy/.env
