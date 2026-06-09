@@ -321,22 +321,15 @@
       min-height: 560px;
       overflow: hidden;
     }
-    /* Hero：底层纹理 + 顶层人像，对齐 Figma mask 叠层 */
+    /* Hero：待机循环视频 + 点击触发互动视频 */
     .hero__bg {
       position: absolute;
       inset: 0;
       opacity: 0.9;
       pointer-events: none;
+      background: linear-gradient(165deg, #ebe8dc 0%, var(--cream) 45%, #f0efe4 100%);
     }
-    .hero__texture {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: 50% 20%;
-    }
-    .hero__model {
+    .hero__media {
       position: absolute;
       left: 50%;
       top: -8px;
@@ -344,8 +337,38 @@
       width: 118%;
       max-width: none;
       height: 92%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      pointer-events: auto;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hero__media:active { opacity: 0.98; }
+    .hero__video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       object-position: 50% 8%;
+      display: block;
+      transition: opacity 0.25s ease;
+    }
+    .hero__video--idle {
+      z-index: 1;
+    }
+    .hero__video--idle.is-hidden {
+      opacity: 0;
+    }
+    .hero__video--greet {
+      z-index: 2;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .hero__video--greet.is-visible {
+      opacity: 1;
     }
     .hero__grad {
       position: absolute;
@@ -2725,8 +2748,25 @@
       <section class="screen is-active" id="screen-home" data-screen="home">
         <div class="hero">
           <div class="hero__bg" aria-hidden="true">
-            <img class="hero__texture" src="./assets/hero-texture.png" alt="" onerror="this.parentElement.style.background='linear-gradient(160deg,#e8e4d4,#c5c0ad)'" />
-            <img class="hero__model" src="./assets/hero-model.png" alt="" onerror="this.style.display='none'" />
+            <button type="button" class="hero__media" id="heroMedia" aria-label="点击数字人互动">
+              <video
+                class="hero__video hero__video--idle"
+                id="heroIdleVideo"
+                src="./assets/hero-idle.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="auto"
+              ></video>
+              <video
+                class="hero__video hero__video--greet"
+                id="heroGreetVideo"
+                src="./assets/hero-greet.mp4"
+                playsinline
+                preload="auto"
+              ></video>
+            </button>
           </div>
           <div class="hero__grad"></div>
           <div class="hero__content">
@@ -4025,6 +4065,46 @@
       document.getElementById('btnListenHist').addEventListener('click', function () {
         window.location.href = REALTIME_CHAT_URL;
       });
+
+      (function initHeroVideos() {
+        var heroMedia = document.getElementById('heroMedia');
+        var heroIdle = document.getElementById('heroIdleVideo');
+        var heroGreet = document.getElementById('heroGreetVideo');
+        if (!heroMedia || !heroIdle || !heroGreet) return;
+
+        var greetPlaying = false;
+
+        function resumeIdle() {
+          greetPlaying = false;
+          heroGreet.classList.remove('is-visible');
+          heroGreet.pause();
+          heroIdle.classList.remove('is-hidden');
+          heroIdle.currentTime = 0;
+          heroIdle.muted = true;
+          heroIdle.play().catch(function () {});
+        }
+
+        function playGreet() {
+          if (greetPlaying) return;
+          greetPlaying = true;
+          heroIdle.classList.add('is-hidden');
+          heroIdle.pause();
+          heroGreet.classList.add('is-visible');
+          heroGreet.currentTime = 0;
+          heroGreet.muted = false;
+          var playPromise = heroGreet.play();
+          if (playPromise && playPromise.catch) {
+            playPromise.catch(function () {
+              resumeIdle();
+              showToast('播放失败，请再点一次');
+            });
+          }
+        }
+
+        heroMedia.addEventListener('click', playGreet);
+        heroGreet.addEventListener('ended', resumeIdle);
+        heroIdle.play().catch(function () {});
+      })();
 
       /* 数字人对话 */
       var chatMessagesEl = document.getElementById('chatMessages');
