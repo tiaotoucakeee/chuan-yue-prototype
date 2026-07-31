@@ -2423,6 +2423,11 @@
       flex-direction: column;
       gap: 32px;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .chat-messages::-webkit-scrollbar {
+      display: none;
     }
     .chat-msg {
       display: flex;
@@ -3786,7 +3791,6 @@
       var toastTimer;
       var checkoutReturnScreen = 'home';
       var chatReturnScreen = 'home';
-      var REALTIME_CHAT_URL = 'http://localhost:5173/session/6681a58f-3fd6-4027-ad98-03bd6dfc13a7?streaming_mode=direct&mode=standard&idle_video_url=/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4&idle_video_urls=[%22/api/v1/characters/6f901915-bea3-46eb-97d6-9983ec8209ac/idle-videos/img_001/512x512/img_001__breathing10s_v1.mp4%22]&visual_input={%22enabled%22:true,%22frame_interval_ms%22:1000,%22max_width%22:1280,%22max_height%22:720,%22jpeg_quality%22:0.78,%22max_frame_bytes%22:524288,%22ws_max_message_bytes%22:1048576,%22max_recent_frames%22:2,%22frame_ttl_ms%22:10000}&character_id=6f901915-bea3-46eb-97d6-9983ec8209ac';
       var COZE_PROXY_ORIGIN =
         location.hostname === 'localhost' || location.hostname === '127.0.0.1'
           ? 'http://localhost:8787'
@@ -4061,9 +4065,6 @@
       /* 界面一交互 */
       document.getElementById('btnWatchShow').addEventListener('click', function () {
         goChat();
-      });
-      document.getElementById('btnListenHist').addEventListener('click', function () {
-        window.location.href = REALTIME_CHAT_URL;
       });
 
       (function initHeroVideos() {
