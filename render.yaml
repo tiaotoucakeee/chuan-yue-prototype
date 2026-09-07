@@ -1,14 +1,14 @@
 services:
   - type: web
-    name: chuan-yue-coze-proxy
+    name: chuan-yue-kimi-proxy
     runtime: node
-    rootDir: coze-proxy
+    rootDir: kimi-proxy
     plan: free
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
     envVars:
-      - key: COZE_BOT_ID
-        value: "7631445325035208742"
-      - key: COZE_API_TOKEN
+      - key: KIMI_MODEL
+        value: kimi-k2.6
+      - key: KIMI_API_KEY
         sync: false
