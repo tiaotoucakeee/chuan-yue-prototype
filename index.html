@@ -13,6 +13,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Noto+Sans+SC:ital,wght@0,400;0,500;1,400&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet" />
+  <script src="./assets-config.js"></script>
+  <script>
+    (function () {
+      try {
+        if (window.self !== window.top) document.documentElement.classList.add('in-iframe');
+      } catch (err) {
+        document.documentElement.classList.add('in-iframe');
+      }
+    })();
+  </script>
   <style>
     /* ========== 设计令牌（对齐 Figma 浅色 / 深色两套） ========== */
     :root {
@@ -46,6 +56,26 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; }
+    /* 小程序 web-view 嵌入：全屏对话模式 */
+    body.embed-mode {
+      background: var(--cream);
+    }
+    body.embed-mode .viewport {
+      padding: 0;
+      min-height: 100vh;
+      align-items: stretch;
+    }
+    body.embed-mode .phone {
+      max-width: none;
+      width: 100%;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      height: 100vh;
+      min-height: 100vh;
+      max-height: 100vh;
+    }
+
     html, body {
       margin: 0;
       min-height: 100%;
@@ -117,7 +147,8 @@
     .screen.is-active { display: block; }
     .screen.publish-screen.is-active,
     .screen.checkout-screen.is-active,
-    .screen.chat-screen.is-active {
+    .screen.chat-screen.is-active,
+    .screen.museum-screen.is-active {
       display: flex;
     }
     @keyframes enter {
@@ -247,24 +278,34 @@
     }
 
     .nav-item {
-      flex: 0 0 auto;
+      flex: 1;
+      min-width: 0;
       border: none;
       background: transparent;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 16px;
+      gap: 3px;
+      padding: 4px 4px;
+      border-radius: 14px;
       cursor: pointer;
       color: var(--text-muted);
-      font-size: 10px;
-      letter-spacing: -0.25px;
+      font-size: 9px;
+      letter-spacing: -0.2px;
       font-style: italic;
       font-family: "Noto Sans SC", sans-serif;
       opacity: 0.65;
     }
-    .nav-item img { width: 20px; height: 20px; object-fit: contain; }
+    .nav-item img,
+    .nav-item__icon svg { width: 20px; height: 20px; object-fit: contain; }
+    .nav-item__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      color: inherit;
+    }
     .nav-item.is-active {
       opacity: 1;
       background: var(--sage);
@@ -684,18 +725,105 @@
     /* ----- 界面三：宝藏（深色） ----- */
     .treasure-hero-img {
       position: relative;
+      display: block;
+      width: calc(100% - 32px);
       height: 420px;
       margin: 16px 16px 0;
+      padding: 0;
       border: 1px solid rgba(223, 191, 188, 0.2);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
       overflow: hidden;
       background: linear-gradient(145deg, #3d2a28, #1a1614);
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+    }
+    .treasure-hero-img:active { transform: scale(0.995); }
+    .treasure-hero-img__shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(26, 22, 20, 0.15) 0%,
+        rgba(26, 22, 20, 0.35) 42%,
+        rgba(26, 22, 20, 0.82) 100%
+      );
+      pointer-events: none;
+    }
+    .treasure-hero-img__cta {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 24px 36px;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .treasure-hero-img__cta-tag {
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(223, 191, 188, 0.35);
+      background: rgba(26, 22, 20, 0.55);
+      color: #ffc9c3;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+    }
+    .treasure-hero-img__cta-title {
+      font-family: "Noto Serif SC", serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fdf3df;
+      letter-spacing: 0.18em;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    }
+    .treasure-hero-img__cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      padding: 13px 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(201, 167, 107, 0.65);
+      background: rgba(201, 167, 107, 0.22);
+      color: #ffe8c8;
+      font-family: "Noto Serif SC", serif;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      animation: treasure-cta-pulse 2.2s ease-in-out infinite;
+    }
+    .treasure-hero-img__cta-btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    @keyframes treasure-cta-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(201, 167, 107, 0.35); transform: translateY(0); }
+      50% { box-shadow: 0 0 0 10px rgba(201, 167, 107, 0); transform: translateY(-1px); }
+    }
+    .treasure-hero-img:hover .treasure-hero-img__cta-btn {
+      background: rgba(201, 167, 107, 0.38);
+    }
+    .treasure-hero-img__hint {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(26, 22, 20, 0.72);
+      color: #ffc9c3;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      pointer-events: none;
     }
     .treasure-hero-img img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       opacity: 0.9;
+      pointer-events: none;
     }
     .ref-badge {
       position: absolute;
@@ -757,6 +885,147 @@
     }
     .btn-gold:active { transform: scale(0.98); }
 
+    .treasure-attribution {
+      margin: 32px 16px 48px;
+      padding: 0;
+      text-align: center;
+      font-size: 10px;
+      line-height: 1.5;
+      color: rgba(253, 243, 223, 0.28);
+    }
+    .treasure-attribution a {
+      color: rgba(253, 243, 223, 0.35);
+      text-decoration: none;
+    }
+    .treasure-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 0 16px 24px;
+    }
+    .treasure-card {
+      background: #fdf3df;
+      border: 1px solid rgba(223, 191, 188, 0.2);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+    }
+    .treasure-card:active { transform: scale(0.99); }
+    .treasure-card__media {
+      position: relative;
+      height: 180px;
+      background: #2a2420;
+    }
+    .treasure-card__media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .treasure-card__badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      background: rgba(26, 22, 20, 0.72);
+      color: #fdf3df;
+    }
+    .treasure-card__badge--exclusive {
+      top: auto;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(115, 92, 0, 0.88);
+      color: #fff8e7;
+      letter-spacing: 1px;
+    }
+    .treasure-card__play {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: rgba(255, 255, 255, 0.92);
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+    .treasure-card__body {
+      padding: 18px 20px 16px;
+    }
+    .treasure-card__title {
+      margin: 0;
+      font-family: "Noto Serif SC", serif;
+      font-size: 18px;
+      color: #1f1b10;
+    }
+    .treasure-card__meta {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: #58413f;
+      line-height: 1.5;
+    }
+    .treasure-card__credit {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #8b716e;
+      font-style: italic;
+    }
+    #infoMedia {
+      margin: 0 0 14px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #1a1614;
+    }
+    #infoMedia video {
+      display: block;
+      width: 100%;
+      max-height: 220px;
+      background: #000;
+    }
+    #infoMedia audio {
+      display: block;
+      width: 100%;
+    }
+    #infoMedia.treasure-detail-cover {
+      margin: 0 0 16px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #1a1614;
+    }
+    #infoMedia.treasure-detail-cover img {
+      display: block;
+      width: 100%;
+      max-height: min(56vh, 460px);
+      object-fit: contain;
+      background: #1a1614;
+    }
+    #infoBody .treasure-detail-link {
+      color: var(--accent, #8b6914);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    #infoBody .treasure-detail-credit {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      font-size: 12px;
+      color: var(--text-muted, #888);
+      line-height: 1.65;
+    }
+    .treasure-empty {
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--dark-muted);
+      font-size: 14px;
+    }
+
     .treasure-section-head {
       padding: 0 24px 24px;
       border-bottom: 1px solid rgba(223, 191, 188, 0.12);
@@ -764,10 +1033,10 @@
     }
     .tabs-inline {
       display: flex;
-      gap: 20px;
+      gap: 14px;
       flex-wrap: wrap;
       margin-top: 16px;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--dark-muted);
       font-family: "Noto Serif SC", serif;
     }
@@ -1222,6 +1491,17 @@
       pointer-events: none;
       transition: opacity 0.2s ease, transform 0.2s ease;
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      color: #2a2420;
+    }
+    .modal #infoTitle {
+      color: #1a1614;
+    }
+    .modal.modal--costume {
+      width: min(400px, calc(100vw - 24px));
+      max-height: min(90vh, 760px);
+      overflow-y: auto;
+      top: 50%;
+      padding: 18px 18px 22px;
     }
     .modal.is-open {
       opacity: 1;
@@ -1573,13 +1853,56 @@
     /* ----- 梨园市集（Figma Body 1:1046） ----- */
     .market-page {
       background: var(--cream);
-      padding: 8px 0 120px;
+      padding: 0 0 120px;
+    }
+    .market-hero {
+      margin: 0 0 8px;
+      padding: 28px 24px 32px;
+      background: linear-gradient(165deg, var(--sage) 0%, rgba(223, 229, 210, 0.45) 55%, var(--cream) 100%);
+      border-bottom: 1px solid rgba(74, 101, 79, 0.08);
+    }
+    .market-hero__eyebrow {
+      margin: 0;
+      font-family: Manrope, sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(74, 101, 79, 0.75);
+    }
+    .market-hero__title {
+      margin: 10px 0 0;
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--primary);
+      letter-spacing: 2px;
+    }
+    .market-hero__desc {
+      margin: 12px 0 0;
+      font-size: 16px;
+      color: var(--text-2);
+      font-style: italic;
+    }
+    .market-hero__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .market-hero__chip {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(251, 250, 238, 0.85);
+      border: 1px solid rgba(74, 101, 79, 0.12);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
     }
     .market-main {
-      padding: 0 24px 48px;
+      padding: 24px 24px 48px;
       display: flex;
       flex-direction: column;
-      gap: 48px;
+      gap: 56px;
     }
     .market-section {
       display: flex;
@@ -1593,9 +1916,9 @@
     .market-search-input {
       background: var(--cream-2);
       border-radius: var(--radius-sm);
-      padding: 13px 16px 12px 48px;
+      padding: 16px 16px 15px 52px;
       font-family: "Noto Sans SC", sans-serif;
-      font-size: 16px;
+      font-size: 17px;
       font-style: italic;
       color: rgba(115, 121, 114, 0.6);
       line-height: normal;
@@ -1661,9 +1984,9 @@
     }
     .market-h2 {
       margin: 0;
-      font-size: 30px;
-      font-weight: 400;
-      line-height: 36px;
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1.15;
       color: var(--text);
     }
     .market-link {
@@ -1707,18 +2030,18 @@
       display: none;
     }
     .market-ticket-card {
-      flex: 0 0 min(288px, 74vw);
+      flex: 0 0 min(320px, 84vw);
       scroll-snap-align: start;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
     .market-ticket-media {
       position: relative;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      height: 220px;
+      box-shadow: 0 8px 24px rgba(27, 28, 21, 0.1);
+      height: 260px;
       background: var(--cream-2);
     }
     .market-ticket-media img {
@@ -1752,9 +2075,9 @@
     .market-ticket-title {
       margin: 0;
       font-family: "Noto Serif SC", serif;
-      font-weight: 400;
-      font-size: 20px;
-      line-height: 28px;
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 1.35;
       color: var(--text);
     }
     .market-ticket-meta {
@@ -1780,8 +2103,8 @@
     }
     .market-price {
       font-family: Manrope, sans-serif;
-      font-weight: 700;
-      font-size: 18px;
+      font-weight: 800;
+      font-size: 24px;
       color: var(--primary);
     }
     .market-price-note {
@@ -1794,9 +2117,10 @@
       cursor: pointer;
       flex-shrink: 0;
       border-radius: var(--radius-sm);
-      padding: 8px 20px;
+      padding: 12px 24px;
       font-family: "Noto Sans SC", sans-serif;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: 600;
       font-style: italic;
       color: #fff;
       background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
@@ -1817,9 +2141,9 @@
     }
     .market-prod-card {
       background: #efeee3;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 16px rgba(27, 28, 21, 0.06);
       display: flex;
       flex-direction: column;
     }
@@ -1862,9 +2186,10 @@
     .market-prod-title {
       margin: 0;
       font-family: "Noto Sans SC", sans-serif;
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: 600;
       font-style: italic;
-      line-height: 20px;
+      line-height: 1.35;
       color: var(--text);
     }
     .market-prod-tagline {
@@ -2672,6 +2997,155 @@
         top: calc(var(--header-h) + var(--safe-t));
       }
     }
+
+    /* Cursor / VS Code Simple Browser：iframe 内 100dvh 常失效导致白屏 */
+    html.in-iframe,
+    html.in-iframe body {
+      height: auto;
+      min-height: 100%;
+      overflow: auto;
+      background: #e8e6df;
+    }
+    html.in-iframe .viewport {
+      min-height: 100vh;
+      height: auto;
+      padding: 16px 8px 32px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    html.in-iframe .phone {
+      width: 100%;
+      max-width: var(--app-w);
+      height: 844px;
+      min-height: 844px;
+      max-height: none;
+      border-radius: 28px;
+      box-shadow: var(--shadow-phone);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    /* 越剧博物馆 Unity WebGL */
+    .screen.museum-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 72;
+      min-height: 0;
+      padding-bottom: 0;
+      flex-direction: column;
+      overflow: hidden;
+      background: #17120d;
+    }
+    .museum-screen.is-active {
+      display: flex;
+    }
+    .museum-toolbar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: calc(8px + var(--safe-t)) 16px 8px;
+      background: rgba(26, 22, 20, 0.96);
+      border-bottom: 1px solid rgba(223, 191, 188, 0.12);
+    }
+    .museum-back {
+      border: 1px solid rgba(223, 191, 188, 0.25);
+      background: rgba(255, 248, 240, 0.08);
+      color: #fdf3df;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: "Noto Serif SC", serif;
+    }
+    .museum-toolbar__title {
+      flex: 1;
+      font-family: "Noto Serif SC", serif;
+      font-size: 15px;
+      color: #ffc9c3;
+      letter-spacing: 0.08em;
+    }
+    .museum-toolbar__actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .museum-action {
+      border: 1px solid rgba(223, 191, 188, 0.25);
+      background: rgba(255, 248, 240, 0.08);
+      color: #ffc9c3;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: "Noto Serif SC", serif;
+      white-space: nowrap;
+    }
+    .museum-action.is-active {
+      background: rgba(201, 167, 107, 0.22);
+      border-color: rgba(201, 167, 107, 0.55);
+      color: #ffe8c8;
+    }
+    .museum-frame-wrap {
+      flex: 1;
+      min-height: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .museum-frame-wrap iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #17120d;
+    }
+
+    /* 博物馆横屏铺满：突破手机框，16:9 居中 */
+    body.museum-expanded {
+      overflow: hidden;
+    }
+    body.museum-expanded .viewport {
+      padding: 0;
+      min-height: 100vh;
+      height: 100dvh;
+      width: 100%;
+      align-items: stretch;
+    }
+    body.museum-expanded .phone {
+      width: 100%;
+      max-width: none;
+      height: 100dvh;
+      min-height: 100dvh;
+      max-height: none;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+    }
+    body.museum-expanded .phone__scroll {
+      overflow: hidden;
+      height: 100%;
+    }
+    body.museum-expanded .screen.museum-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      width: 100vw;
+      height: 100dvh;
+    }
+    body.museum-expanded .museum-frame-wrap iframe {
+      width: min(100vw, 177.777777vh);
+      height: min(56.25vw, 100vh);
+      max-width: 100%;
+      max-height: 100%;
+    }
+    body.museum-expanded .museum-toolbar__hint {
+      display: inline;
+      font-size: 11px;
+      color: #a8937a;
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
@@ -2708,7 +3182,8 @@
       <div class="modal-scrim" id="infoScrim"></div>
       <div class="modal" id="infoModal">
         <h3 class="serif" id="infoTitle" style="margin-top:0">提示</h3>
-        <p id="infoBody" style="margin:0 0 16px;line-height:1.6;color:var(--text-2);font-size:14px"></p>
+        <div id="infoMedia" hidden></div>
+        <div id="infoBody" style="margin:0 0 16px;line-height:1.6;color:var(--text-2);font-size:14px"></div>
         <button type="button" class="btn-primary" id="infoOk" style="width:100%;justify-content:center">知道了</button>
       </div>
 
@@ -2722,24 +3197,6 @@
           </button>
           <div class="topbar__logo-box serif">穿·越</div>
           <h1 class="topbar__title topbar__title-inline">穿·越</h1>
-        </div>
-        <div class="topbar__right" id="topbarRight">
-          <button type="button" class="icon-btn" id="btnSearch" aria-label="搜索" title="搜索">
-            <img src="./assets/icon-search.svg" alt="" />
-          </button>
-          <button type="button" class="icon-btn" id="btnPurchaseEntry" aria-label="梨园市集购物" title="购物">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M6 7h15l-1.35 8.5H7.2L6 7zm0 0L4.75 4H2"
-                stroke="var(--primary)"
-                stroke-width="1.75"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <circle cx="9" cy="20" r="1.65" fill="var(--primary)" />
-              <circle cx="18" cy="20" r="1.65" fill="var(--primary)" />
-            </svg>
-          </button>
         </div>
       </header>
 
@@ -2877,6 +3334,16 @@
 
       <!-- ========== 梨园市集（Figma Body 1:1046） ========== -->
       <section class="screen market-page" id="screen-market" data-screen="market" hidden>
+        <div class="market-hero">
+          <p class="market-hero__eyebrow">Li Yuan Market</p>
+          <h2 class="market-hero__title serif">梨园市集</h2>
+          <p class="market-hero__desc">票务 · 周边 · 文创，一站式逛购</p>
+          <div class="market-hero__chips">
+            <span class="market-hero__chip">🎭 演出票务</span>
+            <span class="market-hero__chip">🎁 雅市物语</span>
+            <span class="market-hero__chip">📦 限时特惠</span>
+          </div>
+        </div>
         <div class="market-main">
           <div class="market-section">
             <div class="market-search-wrap" id="marketSearchHit" role="button" tabindex="0" aria-label="打开搜索">
@@ -3272,25 +3739,33 @@
 
       <!-- ========== 界面三：宝藏 ========== -->
       <section class="screen" id="screen-treasure" data-screen="treasure" hidden>
-        <div class="treasure-hero-img">
-          <img src="./assets/treasure-fan.png" alt="" onerror="this.style.display='none'" />
-          <div class="ref-badge">REF NO: YJ-1922-SF</div>
-        </div>
+        <button type="button" class="treasure-hero-img" id="btnTreasureHero" aria-label="点击进入数字展览馆">
+          <img src="./assets/treasure-fan.png" alt="数字展览馆入口预览" onerror="this.style.display='none'" />
+          <span class="treasure-hero-img__shade" aria-hidden="true"></span>
+          <span class="treasure-hero-img__hint">可点击</span>
+          <div class="treasure-hero-img__cta" aria-hidden="true">
+            <span class="treasure-hero-img__cta-tag">3D · 沉浸式展厅</span>
+            <span class="treasure-hero-img__cta-title">数字展览馆</span>
+            <span class="treasure-hero-img__cta-btn">
+              点击进入
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
+        </button>
 
         <div class="treasure-copy">
           <div class="rule">
-            <p class="featured">Featured Artifact</p>
+            <p class="featured">Digital Exhibition</p>
             <h2 class="big-title">
-              <span class="cn">硃砂扇影</span><br />
-              <span class="en">THE</span><br />
-              <span class="en">CINNABAR</span><br />
-              <span class="en">COLLECTION</span>
+              <span class="cn">数字展览馆</span>
             </h2>
           </div>
           <p class="desc">
-            A hundred-year-old Yueju silk fan, meticulously preserved. The delicate hand-painted plum blossoms emerge from the ivory framework like a whisper of ancient performance.
+            沉浸式 3D 越剧文化展厅，自由漫游、点击展品鉴赏。电脑端支持 WASD 行走与横屏全屏，手机端请横屏体验。
           </p>
-          <button type="button" class="btn-gold" id="btnViewDetails">VIEW DETAILS</button>
+          <button type="button" class="btn-gold" id="btnViewDetails">进入数字展览馆</button>
           <div style="clear:both"></div>
         </div>
 
@@ -3299,46 +3774,10 @@
           <p style="margin:8px 0 0;font-size:14px;letter-spacing:1.6px;color:var(--dark-muted);font-family:'Noto Serif SC',serif">
             ARCHIVAL<br />TREASURES<br />GALLERY
           </p>
-          <div class="tabs-inline" id="treasureTabs">
-            <button type="button" class="is-active" data-tab="all">ALL</button>
-            <button type="button" data-tab="costumes">COSTUMES</button>
-            <button type="button" data-tab="props">PROPS</button>
-            <button type="button" data-tab="scripts">SCRIPTS</button>
-          </div>
+          <div class="tabs-inline" id="treasureTabs"></div>
         </div>
 
-        <div class="wide-shot">
-          <img src="./assets/treasure-headdress.png" alt="" onerror="this.style.opacity=0" />
-        </div>
-
-        <div class="cream-panel">
-          <div class="thumb">
-            <img src="./assets/treasure-embroidery.png" alt="" onerror="this.style.display='none'" />
-          </div>
-          <h4>刺繡 · 牡丹袍</h4>
-          <p style="font-size:13px;line-height:1.65;color:var(--dark-muted);margin:0;font-family:'Noto Serif SC',serif">
-            A masterpiece of Su Embroidery, used by the legendary performers of the 1940s.
-          </p>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;font-size:12px;color:#8b716e;letter-spacing:1.2px;font-family:'Noto Serif SC',serif">
-            <span>EST. 1942</span>
-            <button type="button" class="icon-btn" aria-label="放大">🔍</button>
-          </div>
-        </div>
-
-        <div style="margin:0 16px 24px;height:380px;background:#1a1614;position:relative;overflow:hidden">
-          <div style="position:absolute;inset:12px;background:linear-gradient(160deg,#5c4033,#2a1815);opacity:0.9"></div>
-          <img src="./assets/treasure-robe.png" alt="" style="position:relative;z-index:1;width:100%;height:72%;object-fit:cover;margin-top:12px;opacity:0.88" onerror="this.style.display='none'" />
-          <p style="position:absolute;left:16px;bottom:48px;z-index:2;margin:0;font-size:17px;color:#fdf3df;font-family:'Noto Serif SC',serif">戏服展示 · 牡丹戲夢</p>
-          <p style="position:absolute;left:16px;bottom:20px;z-index:2;margin:0;font-size:11px;letter-spacing:1.2px;color:rgba(200,198,197,0.65);text-transform:uppercase">Costume display</p>
-        </div>
-
-        <div class="cream-panel" style="min-height:280px">
-          <div class="thumb" style="height:220px;top:32px">
-            <img src="./assets/treasure-album.png" alt="" onerror="this.style.display='none'" />
-          </div>
-          <h4 style="margin-top:268px">戏服设计手稿 · 梁祝</h4>
-          <p style="font-size:13px;color:var(--dark-muted);font-family:'Noto Serif SC',serif;letter-spacing:1.2px;text-transform:uppercase">Costume design draft · Liang Zhu</p>
-        </div>
+        <div class="treasure-grid" id="treasureGrid" aria-live="polite"></div>
 
         <div class="archive-block">
           <div style="font-size:36px;margin-bottom:12px">📖</div>
@@ -3393,6 +3832,8 @@
             </div>
           </div>
         </div>
+
+        <div class="treasure-attribution" id="treasureAttribution" hidden></div>
       </section>
 
       <!-- ========== 界面四：声学实验室 ========== -->
@@ -3697,6 +4138,24 @@
         </div>
       </section>
 
+      <!-- 越剧博物馆 Unity WebGL -->
+      <section class="screen museum-screen" id="screen-museum" data-screen="museum" hidden>
+        <header class="museum-toolbar">
+          <button type="button" class="museum-back" id="btnMuseumBack" aria-label="返回宝藏">← 返回</button>
+          <span class="museum-toolbar__title">
+            越剧博物馆
+            <span class="museum-toolbar__hint" id="museumLayoutHint" hidden>· 横屏 16:9</span>
+          </span>
+          <div class="museum-toolbar__actions">
+            <button type="button" class="museum-action is-active" id="btnMuseumLayout" aria-pressed="true">横屏铺满</button>
+            <button type="button" class="museum-action" id="btnMuseumFullscreen" aria-label="全屏">全屏</button>
+          </div>
+        </header>
+        <div class="museum-frame-wrap">
+          <iframe id="museumFrame" title="越剧博物馆" allow="autoplay; fullscreen; gamepad" loading="lazy"></iframe>
+        </div>
+      </section>
+
       <!-- 结算全屏 -->
       <section class="screen checkout-screen" id="screen-checkout" data-screen="checkout" hidden>
         <header class="publish-topbar">
@@ -3755,6 +4214,9 @@
         <button type="button" class="nav-item" data-nav-target="master" id="navMaster">
           <img src="./assets/nav-master.svg" alt="" /><span>大师</span>
         </button>
+        <button type="button" class="nav-item" data-nav-target="market" id="navMarket">
+          <img src="./assets/nav-market.svg" alt="" /><span>市集</span>
+        </button>
         <button type="button" class="nav-item" data-nav-target="treasure" id="navTreasure">
           <img src="./assets/nav-treasure.svg" alt="" /><span>宝藏</span>
         </button>
@@ -3765,6 +4227,7 @@
     </div>
   </div>
 
+  <script src="./data/treasure-items.js"></script>
   <script>
     (function () {
       var phone = document.getElementById('phone');
@@ -3776,6 +4239,7 @@
         checkout: document.getElementById('screen-checkout'),
         treasure: document.getElementById('screen-treasure'),
         chat: document.getElementById('screen-chat'),
+        museum: document.getElementById('screen-museum'),
         'lab-tryon': document.getElementById('screen-lab-tryon'),
         'lab-audio': document.getElementById('screen-lab-audio')
       };
@@ -3791,13 +4255,61 @@
       var toastTimer;
       var checkoutReturnScreen = 'home';
       var chatReturnScreen = 'home';
-      var COZE_PROXY_ORIGIN =
+      var museumReturnScreen = 'treasure';
+      var museumLoaded = false;
+      var museumExpanded = false;
+      var museumLayoutBtn = document.getElementById('btnMuseumLayout');
+      var museumLayoutHint = document.getElementById('museumLayoutHint');
+      var museumFrameWrap = document.querySelector('.museum-frame-wrap');
+
+      function isMuseumDesktop() {
+        return window.matchMedia('(pointer: fine)').matches || window.innerWidth >= 768;
+      }
+
+      function setMuseumExpanded(on) {
+        museumExpanded = !!on;
+        document.body.classList.toggle('museum-expanded', museumExpanded);
+        if (museumLayoutBtn) {
+          museumLayoutBtn.textContent = museumExpanded ? '竖屏预览' : '横屏铺满';
+          museumLayoutBtn.classList.toggle('is-active', museumExpanded);
+          museumLayoutBtn.setAttribute('aria-pressed', museumExpanded ? 'true' : 'false');
+        }
+        if (museumLayoutHint) museumLayoutHint.hidden = !museumExpanded;
+        requestAnimationFrame(function () {
+          var museumFrame = document.getElementById('museumFrame');
+          if (museumFrame && museumFrame.contentWindow) {
+            museumFrame.contentWindow.dispatchEvent(new Event('resize'));
+          }
+        });
+      }
+
+      function toggleMuseumExpanded() {
+        setMuseumExpanded(!museumExpanded);
+      }
+
+      function enterMuseumFullscreen() {
+        var target = museumFrameWrap || document.documentElement;
+        var req =
+          target.requestFullscreen ||
+          target.webkitRequestFullscreen ||
+          target.msRequestFullscreen;
+        if (req) {
+          req.call(target).catch(function () {
+            setMuseumExpanded(true);
+            showToast('已切换横屏铺满');
+          });
+          return;
+        }
+        setMuseumExpanded(true);
+        showToast('已切换横屏铺满');
+      }
+      var KIMI_PROXY_ORIGIN =
         location.hostname === 'localhost' || location.hostname === '127.0.0.1'
           ? 'http://localhost:8787'
-          : 'https://chuan-yue-coze-proxy.onrender.com';
-      var COZE_CHAT_API = COZE_PROXY_ORIGIN + '/api/coze/chat';
-      var COZE_CONV_KEY = 'coze_conversation_id';
-      var COZE_USER_KEY = 'coze_user_id';
+          : 'https://chuan-yue-kimi-proxy.onrender.com';
+      var KIMI_CHAT_API = KIMI_PROXY_ORIGIN + '/api/kimi/chat';
+      var KIMI_CONV_KEY = 'kimi_conversation_id';
+      var KIMI_USER_KEY = 'kimi_user_id';
       var chatSending = false;
 
       var state = {
@@ -3826,7 +4338,7 @@
           el.hidden = !on;
         });
         state.route = key;
-        var immerse = key === 'publish' || key === 'checkout' || key === 'chat';
+        var immerse = key === 'publish' || key === 'checkout' || key === 'chat' || key === 'museum';
         if (topbar) topbar.hidden = immerse;
         if (bottomNav) bottomNav.hidden = immerse;
 
@@ -3862,6 +4374,43 @@
           var chatMessages = document.getElementById('chatMessages');
           if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        if (key === 'museum') {
+          var museumFrame = document.getElementById('museumFrame');
+          if (museumFrame && !museumLoaded) {
+            museumFrame.src = './museum/index.html';
+            museumLoaded = true;
+          }
+          if (isMuseumDesktop()) setMuseumExpanded(true);
+          else setMuseumExpanded(false);
+        } else if (museumExpanded) {
+          setMuseumExpanded(false);
+        }
+      }
+
+      function openMuseum() {
+        if (location.protocol === 'file:') {
+          showToast('请双击「启动穿·越.bat」');
+          window.open('http://localhost:3456/museum/index.html', '_blank');
+          return;
+        }
+        var museumUrl =
+          window.CHuanYueConfig && window.CHuanYueConfig.museumUrl
+            ? window.CHuanYueConfig.museumUrl()
+            : './museum/index.html';
+        location.href = museumUrl;
+      }
+
+      function closeMuseum() {
+        closeMuseumFromEmbed();
+      }
+
+      function closeMuseumFromEmbed() {
+        if (document.fullscreenElement) {
+          (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+        }
+        setMuseumExpanded(false);
+        showScreen(museumReturnScreen || 'treasure');
+        syncNavForRoute(museumReturnScreen || 'treasure');
       }
 
       function updateNavHighlight(target) {
@@ -3877,9 +4426,10 @@
       function syncNavForRoute(screenKey) {
         if (screenKey === 'home') updateNavHighlight('explore');
         else if (screenKey === 'academy') updateNavHighlight('master');
+        else if (screenKey === 'market') updateNavHighlight('market');
         else if (screenKey === 'treasure') updateNavHighlight('treasure');
         else if (screenKey === 'lab-tryon' || screenKey === 'lab-audio') updateNavHighlight('lab');
-        /* market / checkout：不改底栏高亮，保留进入购物前所在 Tab */
+        /* checkout：不改底栏高亮，保留进入购物前所在 Tab */
       }
 
       function goExplore() {
@@ -3894,6 +4444,7 @@
         showScreen('publish');
       }
       function goMarket() {
+        updateNavHighlight('market');
         showScreen('market');
       }
       function goTreasure() {
@@ -3937,6 +4488,7 @@
           var t = btn.getAttribute('data-nav-target');
           if (t === 'explore') goExplore();
           else if (t === 'master') goMaster();
+          else if (t === 'market') goMarket();
           else if (t === 'treasure') goTreasure();
           else if (t === 'lab') {
             if (state.route === 'lab-tryon') goLabAudio();
@@ -3993,7 +4545,6 @@
         searchModal.classList.remove('is-open');
         searchScrim.classList.remove('is-open');
       }
-      document.getElementById('btnSearch').addEventListener('click', openSearch);
       document.getElementById('searchCancel').addEventListener('click', closeSearch);
       document.getElementById('searchOk').addEventListener('click', function () {
         var q = document.getElementById('searchField').value.trim();
@@ -4001,10 +4552,6 @@
         showToast(q ? '搜索：' + q : '请试试剧目或行当关键字');
       });
       searchScrim.addEventListener('click', closeSearch);
-
-      document.getElementById('btnPurchaseEntry').addEventListener('click', function () {
-        goMarket();
-      });
 
       var marketScreen = document.getElementById('screen-market');
       var marketSearchHit = document.getElementById('marketSearchHit');
@@ -4049,14 +4596,41 @@
       /* 通用信息弹窗 */
       var infoModal = document.getElementById('infoModal');
       var infoScrim = document.getElementById('infoScrim');
-      function openInfo(title, body) {
+      var infoMediaEl = document.getElementById('infoMedia');
+      var infoBodyEl = document.getElementById('infoBody');
+      function openInfo(title, body, options) {
+        options = options || {};
         document.getElementById('infoTitle').textContent = title;
-        document.getElementById('infoBody').textContent = body;
+        if (options.html) {
+          infoBodyEl.innerHTML = body;
+        } else {
+          infoBodyEl.textContent = body;
+        }
+        infoMediaEl.classList.remove('treasure-detail-cover');
+        if (options.mediaHtml) {
+          infoMediaEl.innerHTML = options.mediaHtml;
+          infoMediaEl.hidden = false;
+          if (options.coverLayout) {
+            infoMediaEl.classList.add('treasure-detail-cover');
+          }
+        } else {
+          infoMediaEl.innerHTML = '';
+          infoMediaEl.hidden = true;
+        }
+        infoModal.classList.toggle('modal--costume', !!options.coverLayout);
         infoModal.classList.add('is-open');
         infoScrim.classList.add('is-open');
       }
       function closeInfo() {
-        infoModal.classList.remove('is-open');
+        var vid = infoMediaEl.querySelector('video');
+        var aud = infoMediaEl.querySelector('audio');
+        if (vid) vid.pause();
+        if (aud) aud.pause();
+        infoMediaEl.innerHTML = '';
+        infoMediaEl.hidden = true;
+        infoMediaEl.classList.remove('treasure-detail-cover');
+        infoBodyEl.textContent = '';
+        infoModal.classList.remove('is-open', 'modal--costume');
         infoScrim.classList.remove('is-open');
       }
       document.getElementById('infoOk').addEventListener('click', closeInfo);
@@ -4153,7 +4727,7 @@
         chatTypingEl.insertAdjacentHTML('beforebegin', getChatWelcomeMessageHtml());
         chatTypingEl.hidden = true;
         chatInputEl.value = '';
-        localStorage.removeItem(COZE_CONV_KEY);
+        localStorage.removeItem(KIMI_CONV_KEY);
         scrollChatToBottom();
         showToast('对话已清空');
       }
@@ -4225,11 +4799,11 @@
         return pump();
       }
 
-      function getCozeUserId() {
-        var id = localStorage.getItem(COZE_USER_KEY);
+      function getKimiUserId() {
+        var id = localStorage.getItem(KIMI_USER_KEY);
         if (!id) {
           id = 'user_' + Math.random().toString(36).slice(2, 10);
-          localStorage.setItem(COZE_USER_KEY, id);
+          localStorage.setItem(KIMI_USER_KEY, id);
         }
         return id;
       }
@@ -4248,7 +4822,7 @@
         var aiBubble = null;
         var gotContent = false;
 
-        fetch(COZE_CHAT_API, {
+        fetch(KIMI_CHAT_API, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -4256,8 +4830,8 @@
           },
           body: JSON.stringify({
             message: text,
-            user_id: getCozeUserId(),
-            conversation_id: localStorage.getItem(COZE_CONV_KEY) || ''
+            user_id: getKimiUserId(),
+            conversation_id: localStorage.getItem(KIMI_CONV_KEY) || ''
           })
         })
           .then(function (res) {
@@ -4275,7 +4849,7 @@
             return readChatSSE(res.body.getReader(), function (eventName, dataStr) {
               var payload = JSON.parse(dataStr);
               if (eventName === 'meta' && payload.conversation_id) {
-                localStorage.setItem(COZE_CONV_KEY, payload.conversation_id);
+                localStorage.setItem(KIMI_CONV_KEY, payload.conversation_id);
                 return;
               }
               if (eventName === 'delta' && payload.content) {
@@ -4287,13 +4861,13 @@
                 return;
               }
               if (eventName === 'error') {
-                throw new Error(payload.error || 'Coze 对话失败');
+                throw new Error(payload.error || 'Kimi 对话失败');
               }
             });
           })
           .catch(function (err) {
             if (chatTypingEl) chatTypingEl.hidden = true;
-            showToast(err.message || 'Coze 对话失败');
+            showToast(err.message || '小三嬝暂时无法回复，请确认 Kimi 代理已启动');
           })
           .finally(function () {
             if (chatTypingEl) chatTypingEl.hidden = true;
@@ -4411,21 +4985,230 @@
         });
       });
 
-      /* 界面三 */
-      document.getElementById('btnViewDetails').addEventListener('click', function () {
-        openInfo('VIEW DETAILS', '藏品详情页（示意）：扇骨材质、传承谱系与高清多维影像。');
-      });
+      /* 界面三 · 宝藏（数据驱动 + 戏迷网来源标注） */
+      var treasureData = null;
+      var treasureActiveTab = 'all';
       var treasureTabsEl = document.getElementById('treasureTabs');
-      treasureTabsEl.querySelectorAll('button').forEach(function (tb) {
-        tb.addEventListener('click', function () {
-          treasureTabsEl.querySelectorAll('button').forEach(function (x) {
-            x.classList.remove('is-active');
-          });
-          tb.classList.add('is-active');
-          showToast('筛选：' + tb.textContent);
+      var treasureGridEl = document.getElementById('treasureGrid');
+      var treasureAttributionEl = document.getElementById('treasureAttribution');
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function getFeaturedTreasure() {
+        if (!treasureData || !treasureData.items) return null;
+        return treasureData.items.find(function (it) {
+          return it.featured;
+        }) || treasureData.items[0];
+      }
+
+      function getCategoryLabel(key) {
+        if (!treasureData || !treasureData.categories) return key || '';
+        var cat = treasureData.categories.find(function (c) {
+          return c.key === key;
         });
+        return cat ? cat.label : key || '';
+      }
+
+      function renderTreasureFeatured() {
+        var item = getFeaturedTreasure();
+        if (!item) return;
+        var heroImg = document.querySelector('#screen-treasure .treasure-hero-img img');
+        if (heroImg && item.image) heroImg.src = item.image;
+      }
+
+      function renderTreasureTabs() {
+        if (!treasureTabsEl || !treasureData) return;
+        treasureTabsEl.innerHTML = '';
+        treasureData.categories.forEach(function (cat) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = cat.label;
+          btn.setAttribute('data-tab', cat.key);
+          btn.classList.toggle('is-active', cat.key === treasureActiveTab);
+          btn.addEventListener('click', function () {
+            treasureActiveTab = cat.key;
+            renderTreasureTabs();
+            renderTreasureGrid();
+          });
+          treasureTabsEl.appendChild(btn);
+        });
+      }
+
+      function renderTreasureGrid() {
+        if (!treasureGridEl || !treasureData) return;
+        var defaultCredit = (treasureData.source && treasureData.source.credit) || '转载自中国越剧戏迷网';
+        var items = treasureData.items.filter(function (it) {
+          return treasureActiveTab === 'all' || it.category === treasureActiveTab;
+        });
+        if (!items.length) {
+          treasureGridEl.innerHTML = '<p class="treasure-empty">该分类暂无展品，请在 data/treasure-items.json 中添加。</p>';
+          return;
+        }
+        treasureGridEl.innerHTML = items
+          .map(function (it) {
+            var isVideo = it.mediaType === 'video';
+            var isAudio = it.mediaType === 'audio';
+            var badgeLabel = getCategoryLabel(it.category);
+            var itemCredit = it.credit || defaultCredit;
+            return (
+              '<button type="button" class="treasure-card" data-treasure-id="' +
+              escapeHtml(it.id) +
+              '">' +
+              '<div class="treasure-card__media">' +
+              '<img src="' +
+              escapeHtml(it.image) +
+              '" alt="" loading="lazy" onerror="this.style.opacity=0.2" />' +
+              (isVideo ? '<span class="treasure-card__play" aria-hidden="true">▶</span>' : '') +
+              (isAudio ? '<span class="treasure-card__play" aria-hidden="true">♪</span>' : '') +
+              '<span class="treasure-card__badge">' +
+              escapeHtml(badgeLabel) +
+              '</span>' +
+              (it.licensed
+                ? '<span class="treasure-card__badge treasure-card__badge--exclusive">独家授权</span>'
+                : '') +
+              '</div>' +
+              '<div class="treasure-card__body">' +
+              '<h4 class="treasure-card__title">' +
+              escapeHtml(it.title) +
+              '</h4>' +
+              '<p class="treasure-card__meta">' +
+              escapeHtml(it.summary || '') +
+              (it.sourcePage ? ' · ' + escapeHtml(it.sourcePage) : '') +
+              '</p>' +
+              '<p class="treasure-card__credit">' +
+              escapeHtml(itemCredit) +
+              '</p></div></button>'
+            );
+          })
+          .join('');
+        treasureGridEl.querySelectorAll('.treasure-card').forEach(function (card) {
+          card.addEventListener('click', function () {
+            var id = card.getAttribute('data-treasure-id');
+            var item = treasureData.items.find(function (x) {
+              return x.id === id;
+            });
+            if (item) openTreasureDetail(item);
+          });
+        });
+      }
+
+      function openTreasureDetail(item) {
+        var defaultCredit = (treasureData.source && treasureData.source.credit) || '转载自中国越剧戏迷网';
+        var credit = item.credit || defaultCredit;
+        var sourceName = (treasureData.source && treasureData.source.name) || '中国越剧戏迷网';
+        var bodyHtml =
+          '<p>' +
+          escapeHtml(item.body || item.summary || '') +
+          '</p>' +
+          (item.sourceUrl && !item.licensed
+            ? '<p><a class="treasure-detail-link" href="' +
+              escapeHtml(item.sourceUrl) +
+              '" target="_blank" rel="noopener noreferrer">查看原页面 · ' +
+              escapeHtml(sourceName) +
+              '</a></p>'
+            : '') +
+          '<p class="treasure-detail-credit">' +
+          escapeHtml(credit) +
+          (item.sourcePage ? ' · ' + escapeHtml(item.sourcePage) : '') +
+          '</p>';
+        var mediaHtml = '';
+        var coverLayout = false;
+        if (item.mediaType === 'video' && item.videoUrl) {
+          mediaHtml =
+            '<video controls playsinline preload="metadata" poster="' +
+            escapeHtml(item.image || '') +
+            '"><source src="' +
+            escapeHtml(item.videoUrl) +
+            '" type="video/mp4" />您的浏览器不支持视频播放。</video>';
+        } else if (item.mediaType === 'audio' && item.audioUrl) {
+          mediaHtml =
+            '<audio controls preload="metadata" src="' +
+            escapeHtml(item.audioUrl) +
+            '">您的浏览器不支持音频播放。</audio>';
+        } else if (item.category === 'costumes' && item.image) {
+          mediaHtml =
+            '<img src="' +
+            escapeHtml(item.image) +
+            '" alt="' +
+            escapeHtml(item.title || '') +
+            '" loading="lazy" />';
+          coverLayout = true;
+        }
+        openInfo(item.title, bodyHtml, {
+          html: true,
+          mediaHtml: mediaHtml,
+          coverLayout: coverLayout,
+        });
+      }
+
+      function initTreasureAttribution() {
+        if (!treasureAttributionEl || !treasureData || !treasureData.source) return;
+        var s = treasureData.source;
+        treasureAttributionEl.innerHTML =
+          escapeHtml(s.credit) +
+          ' · <a href="' +
+          escapeHtml(s.url) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(s.name) +
+          '</a>';
+        treasureAttributionEl.hidden = false;
+      }
+
+      function initTreasurePage() {
+        renderTreasureFeatured();
+        renderTreasureTabs();
+        renderTreasureGrid();
+        initTreasureAttribution();
+      }
+
+      function applyTreasureData(data) {
+        treasureData = data;
+        initTreasurePage();
+      }
+
+      function loadTreasureData() {
+        if (window.__TREASURE_ITEMS__) {
+          applyTreasureData(window.__TREASURE_ITEMS__);
+          return;
+        }
+        if (location.protocol === 'file:') {
+          showToast('宝藏数据未加载，请打开正确目录下的 index.html');
+          return;
+        }
+        fetch('./data/treasure-items.json')
+          .then(function (res) {
+            if (!res.ok) throw new Error('load failed');
+            return res.json();
+          })
+          .then(applyTreasureData)
+          .catch(function () {
+            showToast('宝藏数据加载失败，请用本地服务器打开');
+          });
+      }
+
+      loadTreasureData();
+
+      document.getElementById('btnTreasureHero').addEventListener('click', openMuseum);
+      document.getElementById('btnViewDetails').addEventListener('click', openMuseum);
+      document.getElementById('btnMuseumBack').addEventListener('click', closeMuseum);
+      document.getElementById('btnMuseumLayout').addEventListener('click', toggleMuseumExpanded);
+      document.getElementById('btnMuseumFullscreen').addEventListener('click', enterMuseumFullscreen);
+      document.addEventListener('fullscreenchange', function () {
+        var fsBtn = document.getElementById('btnMuseumFullscreen');
+        if (!fsBtn) return;
+        fsBtn.textContent = document.fullscreenElement ? '退出全屏' : '全屏';
       });
       document.getElementById('btnEnterArchive').addEventListener('click', function () {
+        if (treasureData && treasureData.source && treasureData.source.url) {
+          window.open(treasureData.source.url, '_blank', 'noopener,noreferrer');
+          return;
+        }
         showToast('进入数字化典藏（示意）');
       });
 
@@ -4566,8 +5349,25 @@
         });
       });
 
-      /* 初始化：探索 Tab + 首页 */
-      goExplore();
+      /* 小程序 web-view：直达对话页 */
+      var embedParams = new URLSearchParams(location.search);
+      if (embedParams.get('embed') === '1') {
+        document.body.classList.add('embed-mode');
+      }
+      if (embedParams.get('entry') === 'chat') {
+        chatReturnScreen = 'home';
+        showScreen('chat');
+      } else if (embedParams.get('return') === 'treasure') {
+        goTreasure();
+        var cleanUrl = new URL(location.href);
+        cleanUrl.searchParams.delete('return');
+        history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+      } else {
+        goExplore();
+        if (location.hash) {
+          history.replaceState(null, '', location.pathname + location.search);
+        }
+      }
     })();
   </script>
 </body>
