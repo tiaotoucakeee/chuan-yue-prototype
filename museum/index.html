@@ -145,8 +145,27 @@ button.main:disabled{opacity:.45;cursor:not-allowed}
     statusEl.textContent = '正在加载展厅…';
     errorEl.hidden = true;
     try {
+      var manifestResponse = await fetch(museumAsset('Build/data-parts/manifest.json'));
+      if (!manifestResponse.ok) throw new Error('无法加载展馆资源清单');
+      var manifest = await manifestResponse.json();
+      var buffers = [];
+      var loaded = 0;
+      for (var part of manifest.parts) {
+        var response = await fetch(museumAsset('Build/data-parts/' + part.name));
+        if (!response.ok) throw new Error('展馆资源下载失败：' + part.name);
+        var buffer = await response.arrayBuffer();
+        var hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', buffer)))
+          .map(function (byte) { return byte.toString(16).padStart(2, '0'); }).join('');
+        if (buffer.byteLength !== part.size || hash !== part.sha256) throw new Error('展馆资源校验失败，请重试');
+        buffers.push(buffer);
+        loaded += buffer.byteLength;
+        progressEl.value = loaded / manifest.size * 0.8;
+        statusEl.textContent = '正在下载展厅… ' + Math.round(loaded / manifest.size * 100) + '%';
+      }
+      var dataBlobUrl = URL.createObjectURL(new Blob(buffers));
+      buffers = null;
       window.museumInstance = await createUnityInstance(canvas, {
-        dataUrl: museumAsset('Build/WebMuseum.data.unityweb'),
+        dataUrl: dataBlobUrl,
         frameworkUrl: museumAsset('Build/WebMuseum.framework.js.unityweb'),
         codeUrl: museumAsset('Build/WebMuseum.wasm.unityweb'),
         streamingAssetsUrl: museumAsset('StreamingAssets'),
@@ -167,10 +186,12 @@ button.main:disabled{opacity:.45;cursor:not-allowed}
           ? '正在加载展厅… ' + Math.round(value * 100) + '%'
           : '正在准备展品…';
       });
+      URL.revokeObjectURL(dataBlobUrl);
       document.getElementById('loading').hidden = true;
       document.getElementById('loading').style.display = 'none';
       canvas.focus();
     } catch (error) {
+      if (dataBlobUrl) URL.revokeObjectURL(dataBlobUrl);
       statusEl.textContent = '展厅加载失败';
       errorEl.hidden = false;
       errorEl.textContent = String(error && error.message ? error.message : error);
