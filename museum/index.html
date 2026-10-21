@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>越剧博物馆</title>
+<script>
+(function () {
+  var p = location.pathname.replace(/\/+$/, '');
+  var base = '/museum/';
+  if (p.endsWith('/index.html')) base = p.slice(0, -10) + '/';
+  else if (p.endsWith('museum') || p.endsWith('/museum')) base = p + '/';
+  else if (p.indexOf('/museum/') >= 0) base = p.slice(0, p.indexOf('/museum/') + 8);
+  document.write('<base href="' + base + '">');
+})();
+</script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17120d;color:#f0e2c9;font-family:system-ui,"Noto Serif SC",serif,sans-serif}
+#toolbar{position:fixed;top:0;left:0;right:0;z-index:2000;display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(26,22,20,.94);border-bottom:1px solid rgba(223,191,188,.15)}
+#toolbar a,#toolbar button{border:1px solid rgba(223,191,188,.28);background:rgba(255,248,240,.08);color:#ffc9c3;border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer;text-decoration:none;font-family:inherit}
+#toolbar span{flex:1;text-align:center;font-size:14px;letter-spacing:.08em;color:#ffc9c3}
+#stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(100vw,177.777777vh);height:min(56.25vw,100vh);background:#000;margin-top:24px}
+#unity-canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+#rotate{display:none;position:fixed;inset:0;z-index:1000;background:#17120d;place-content:center;text-align:center;padding:30px}
+#loading{position:fixed;inset:0;z-index:1500;display:grid;place-content:center;text-align:center;background:#17120d;padding:30px}
+h1{font-size:clamp(26px,5vw,42px);font-weight:500;letter-spacing:.12em;margin:0 0 24px}
+p{font-size:14px;line-height:1.85;color:#c2b59e;max-width:520px;margin:0 auto}
+progress{width:min(300px,80vw);height:5px;accent-color:#c9a76b;margin:18px auto;display:block}
+button.main{margin:20px auto 0;padding:14px 35px;border:1px solid #b99962;background:transparent;color:#f0e2c9;font-size:16px;cursor:pointer;border-radius:4px}
+button.main:disabled{opacity:.45;cursor:not-allowed}
+#error{white-space:pre-wrap;max-width:650px;font-size:13px;color:#ffb4ae;margin-top:16px}
+#mobileHint{display:none}
+</style>
+</head>
+<body>
+<header id="toolbar">
+  <a href="/index.html?return=treasure">← 返回宝藏</a>
+  <span>越剧博物馆 · 16:9</span>
+  <button type="button" id="btnFs">全屏</button>
+</header>
+<div id="stage"><canvas id="unity-canvas" width="1280" height="720" tabindex="0" aria-label="越剧博物馆交互展厅"></canvas></div>
+<div id="rotate"><h1>请横屏体验</h1><p>展厅为 16:9 横屏画幅，请将设备横过来。</p></div>
+<div id="loading">
+  <h1>越剧博物馆</h1>
+  <p id="desktopHint">WASD 移动 · 按住右键拖动查看 · 点击展品鉴赏</p>
+  <p id="mobileHint">摇杆移动 · 滑动查看 · 点击展品鉴赏</p>
+  <button type="button" class="main" id="start" disabled>正在准备引擎…</button>
+  <progress id="progress" value="0" max="1" hidden></progress>
+  <p id="status">首次进入需加载约 290MB 展厅资源，请稍候。</p>
+  <p id="error" hidden></p>
+</div>
+<script>
+(function () {
+  var canvas = document.getElementById('unity-canvas');
+  var startBtn = document.getElementById('start');
+  var statusEl = document.getElementById('status');
+  var progressEl = document.getElementById('progress');
+  var errorEl = document.getElementById('error');
+  var mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent));
+
+  if (mobile) {
+    document.getElementById('desktopHint').style.display = 'none';
+    document.getElementById('mobileHint').style.display = 'block';
+  }
+
+  function updateRotateHint() {
+    var landscape = window.innerWidth >= window.innerHeight;
+    document.getElementById('rotate').style.display = landscape ? 'none' : 'grid';
+  }
+  window.addEventListener('resize', updateRotateHint);
+  updateRotateHint();
+
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  document.getElementById('btnFs').addEventListener('click', function () {
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) return;
+    if (document.fullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen || function () {}).call(document);
+    } else {
+      req.call(el);
+    }
+  });
+  document.addEventListener('fullscreenchange', function () {
+    document.getElementById('btnFs').textContent = document.fullscreenElement ? '退出全屏' : '全屏';
+  });
+
+  if (location.protocol === 'file:') {
+    statusEl.innerHTML = '请双击文件夹里的 <strong style="color:#ffe8c8">启动穿·越.bat</strong>，<br>不要直接打开 html 文件。';
+    startBtn.textContent = '打开 http://localhost:3456';
+    startBtn.disabled = false;
+    startBtn.onclick = function () { window.open('http://localhost:3456/museum/index.html', '_blank'); };
+    return;
+  }
+
+  function museumAsset(path) {
+    var el = document.querySelector('base');
+    var base = el ? el.href : (location.origin + '/museum/');
+    return new URL(path.replace(/^\//, ''), base).href;
+  }
+
+  function loadUnityLoader() {
+    if (typeof createUnityInstance !== 'undefined') return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = museumAsset('Build/WebMuseum.loader.js');
+      s.async = false;
+      s.onload = function () {
+        if (typeof createUnityInstance !== 'undefined') resolve();
+        else reject(new Error('引擎脚本已加载，但 createUnityInstance 未定义'));
+      };
+      s.onerror = function () {
+        reject(new Error('无法加载 ' + s.src + '\n请确认 museum/Build 目录完整，并用启动脚本打开 localhost:3456'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  loadUnityLoader()
+    .then(function () {
+      startBtn.disabled = false;
+      startBtn.textContent = '进入展厅';
+      statusEl.textContent = '引擎就绪，点击进入展厅并开始加载资源。';
+    })
+    .catch(function (err) {
+      statusEl.textContent = '引擎加载失败';
+      errorEl.hidden = false;
+      errorEl.textContent = String(err && err.message ? err.message : err);
+      startBtn.textContent = '重试';
+      startBtn.disabled = false;
+      startBtn.onclick = function () { location.reload(); };
+    });
+
+  startBtn.addEventListener('click', async function () {
+    if (typeof createUnityInstance === 'undefined') {
+      statusEl.textContent = '引擎未就绪，请刷新页面重试';
+      return;
+    }
+    startBtn.disabled = true;
+    startBtn.hidden = true;
+    progressEl.hidden = false;
+    statusEl.textContent = '正在加载展厅…';
+    errorEl.hidden = true;
+    try {
+      window.museumInstance = await createUnityInstance(canvas, {
+        dataUrl: museumAsset('Build/WebMuseum.data.unityweb'),
+        frameworkUrl: museumAsset('Build/WebMuseum.framework.js.unityweb'),
+        codeUrl: museumAsset('Build/WebMuseum.wasm.unityweb'),
+        streamingAssetsUrl: museumAsset('StreamingAssets'),
+        companyName: 'DefaultCompany',
+        productName: 'Yueju_museum',
+        productVersion: '0.1.0',
+        matchWebGLToCanvasSize: false,
+        devicePixelRatio: 1,
+        showBanner: function (message, type) {
+          if (type === 'error') {
+            console.error(message);
+            statusEl.textContent = '加载遇到问题，请刷新重试。';
+          }
+        }
+      }, function (value) {
+        progressEl.value = value;
+        statusEl.textContent = value < 0.9
+          ? '正在加载展厅… ' + Math.round(value * 100) + '%'
+          : '正在准备展品…';
+      });
+      document.getElementById('loading').hidden = true;
+      document.getElementById('loading').style.display = 'none';
+      canvas.focus();
+    } catch (error) {
+      statusEl.textContent = '展厅加载失败';
+      errorEl.hidden = false;
+      errorEl.textContent = String(error && error.message ? error.message : error);
+      startBtn.hidden = false;
+      startBtn.disabled = false;
+      startBtn.textContent = '重试';
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -12,6 +12,7 @@ kimi-proxy/node_modules/
 coze-proxy/node_modules/
 
 # 大体积资源 → 放 OSS/CDN，见 README（本地开发保留即可）
-museum/
 game-museum/
 assets/videos/
+
+museum/Build/WebMuseum.data.unityweb

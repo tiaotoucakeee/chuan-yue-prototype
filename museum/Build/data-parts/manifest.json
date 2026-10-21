@@ -1,0 +1,36 @@
+{
+  "size": 292305221,
+  "sha256": "9056ccf5de970f89575747e0f5ca79f32ad6064c6f9ae277107b2172d2820674",
+  "parts": [
+    {
+      "name": "part-000",
+      "size": 50331648,
+      "sha256": "df506286efbfaa425f9406b622a63c3574de43dfdc5be606fa03ca2006726ee3"
+    },
+    {
+      "name": "part-001",
+      "size": 50331648,
+      "sha256": "b99b465b5c2780c50883add213df203b5d8dfc744fd06dc90dd74c2383712195"
+    },
+    {
+      "name": "part-002",
+      "size": 50331648,
+      "sha256": "4e62bcea7d1acaaafee54042d34b78b46c8006a91f90c32eed9380944ee1809f"
+    },
+    {
+      "name": "part-003",
+      "size": 50331648,
+      "sha256": "3c5d0e256438b3c5e71dbbf8ef4d4da2b4d11d3f5f0b3c55ef8f3b2fd5d4cca8"
+    },
+    {
+      "name": "part-004",
+      "size": 50331648,
+      "sha256": "23e4bcc7cf6f999740b7e4317287caee60e40b17950666f7f391ed5dfd067269"
+    },
+    {
+      "name": "part-005",
+      "size": 40646981,
+      "sha256": "cf7448a47aacfbd41481bc1611125695443df1d7f8bb09d3ce25e6837336cc87"
+    }
+  ]
+}
